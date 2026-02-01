@@ -1,0 +1,23 @@
+
+
+luajit: test.lua:1: no
+stack traceback:
+	[C]: in function 'error'
+	test.lua:1: in main chunk
+	[C]: at 0x010d25177b
+
+
+
+luajit: test.lua:1: module 'none' not found:
+	no field package.preload['none']
+	no file './none.lua'
+	no file '/usr/local/share/luajit-2.1/none.lua'
+	no file '/usr/local/share/lua/5.1/none.lua'
+	no file '/usr/local/share/lua/5.1/none/init.lua'
+	no file './none.so'
+	no file '/usr/local/lib/lua/5.1/none.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+stack traceback:
+	[C]: in function 'require'
+	test.lua:1: in main chunk
+	[C]: at 0x0101bb677b

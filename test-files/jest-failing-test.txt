@@ -1,0 +1,27 @@
+
+
+FAIL src/fail-throws-synchronous.test.js
+  ✕ should throw if passed true (9ms)
+
+  ● should throw if passed true
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: [Error: shouldThrow was true]
+    Received: [Error: didn't throw]
+
+       8 |     throw new Error("didn't throw");
+       9 |   } catch (error) {
+    > 10 |     expect(error).toEqual(new Error('shouldThrow was true'));
+         |                   ^
+      11 |   }
+      12 | });
+      13 |
+
+      at Object.toEqual (src/fail-throws-synchronous.test.js:10:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        1.883s
+Ran all test suites matching /src\/fail-throws-synchronous.test.js/i.

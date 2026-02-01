@@ -1,0 +1,9 @@
+
+
+$ tsc .
+main.ts:6:5 - error TS2322: Type 'null' is not assignable to type 'Person'.
+
+6     return null;
+      ~~~~~~~~~~~~
+
+

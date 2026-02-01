@@ -1,0 +1,5 @@
+
+
+
+test.c: In function ‘main’:
+test.c:18:3: warning: incompatible implicit declaration of built-in function ‘strcpy’ [enabled by default]

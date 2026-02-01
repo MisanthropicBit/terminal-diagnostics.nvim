@@ -1,0 +1,14 @@
+
+
+
+Traceback (most recent call last):
+  File "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/temp.py", line 9, in <module>
+    main()
+    ~~~~^^
+  File "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/temp.py", line 7, in main
+    print(f1(a, b))
+          ~~^^^^^^
+  File "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/temp.py", line 2, in f1
+    return a + b
+           ~~^~~
+TypeError: unsupported operand type(s) for +: 'int' and 'str'
