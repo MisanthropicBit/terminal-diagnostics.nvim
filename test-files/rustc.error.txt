@@ -1,0 +1,16 @@
+
+
+error[E0000]: main error message
+  --> file.rs:10:2
+   |
+10 | <code>
+   | -^^^^- secondary label
+   |  |
+   |  primary label
+   |
+   = note: note without a `Span`, created with `.note`
+note: sub-diagnostic message for `.span_note`
+  --> file.rs:89:1
+   |
+89 | more code
+   |      ^^^^

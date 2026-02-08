@@ -8,6 +8,13 @@ main.ts:6:5 - error TS2322: Type 'null' is not assignable to type 'Person'.
 
 
 
+
+foo.js: line 5, col 10, Error - Unexpected foo. (foo)
+bar.js: line 6, col 11, Warning - Unexpected bar. (bar)
+baz.js: line 1, col 1, Error - Fatal error parsing file.
+
+3 problems
+
 Traceback (most recent call last):
   File "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/temp.py", line 9, in <module>
     main()
@@ -27,6 +34,17 @@ stack traceback:
 	[C]: in function 'error'
 	test.lua:1: in main chunk
 	[C]: in ?
+
+
+/var/lib/jenkins/workspace/eslint Release/eslint/fullOfProblems.js
+  1:10  error    'addOne' is defined but never used            no-unused-vars
+  2:9   error    Use the isNaN function to compare with NaN    use-isnan
+  3:16  error    Unexpected space before unary operator '++'   space-unary-ops
+  3:20  warning  Missing semicolon                             semi
+  4:12  warning  Unnecessary 'else' after 'return'             no-else-return
+  5:1   warning  Expected indentation of 8 spaces but found 6  indent
+  5:7   error    Function 'addOne' expected a return value     consistent-return
+  5:13  warning  Missing semicolon                             semi
 
 
 
@@ -57,6 +75,22 @@ Snapshots:   0 total
 Time:        1.883s
 Ran all test suites matching /src\/fail-throws-synchronous.test.js/i.
 
+
+
+error[E0000]: main error message
+  --> file.rs:10:2
+   |
+10 | <code>
+   | -^^^^- secondary label
+   |  |
+   |  primary label
+   |
+   = note: note without a `Span`, created with `.note`
+note: sub-diagnostic message for `.span_note`
+  --> file.rs:89:1
+   |
+89 | more code
+   |      ^^^^
 
 
 lua: test.lua:1: module 'none' not found:
