@@ -14,4 +14,8 @@ local pattern = {
     message = 6,
 }
 
-return generators.generate_simple_matcher({ pattern = pattern })
+return generators.generate_simple_matcher({
+    name = "tsc",
+    kind = "build",
+    pattern = pattern,
+})

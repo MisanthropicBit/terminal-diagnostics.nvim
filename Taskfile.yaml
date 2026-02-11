@@ -1,0 +1,27 @@
+version: '3'
+
+tasks:
+  test_deps:
+    cmds:
+      - mkdir deps/
+      - git clone --filter=blob:none https://github.com/nvim-mini/mini.test deps/mini.test
+    status:
+      - test -d deps/mini.test 
+
+  test:*:
+    deps: [test_deps]
+    vars:
+      FILE: '{{index .MATCH 0}}'
+    cmds:
+      - nvim --headless --noplugin -u ./tests/minimal_init.lua -c "lua MiniTest.run_file('{{.FILE}}')"
+
+  test-all:
+    deps: [test_deps]
+    cmds:
+      - nvim --headless --noplugin -u ./tests/minimal_init.lua -c "lua MiniTest.run()"
+
+  lint:
+    stylua --check lua/ tests/
+
+  lint:fix:
+    stylua lua/ tests/

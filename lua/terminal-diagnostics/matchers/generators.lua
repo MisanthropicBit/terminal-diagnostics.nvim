@@ -45,10 +45,10 @@ function matcher_generators.generate_simple_matcher(options)
         local match
 
         if last_match_pos then
-            match = utils.patterns.find_at_cursor(_options.buffer, pattern.regex)
+            match = utils.patterns.find_at_cursor(_options.buffer, pattern)
             last_match_pos = nil
         else
-            match = utils.patterns.find(_options.buffer, pattern.regex, count)
+            match = utils.patterns.find(_options.buffer, pattern, count)
         end
 
         if not match then
@@ -60,7 +60,7 @@ function matcher_generators.generate_simple_matcher(options)
 
     matcher.match_start = function(_options)
         local count = _options.count or 1
-        local pos = utils.patterns.find(_options.buffer, pattern.regex, count)
+        local pos = utils.patterns.find(_options.buffer, pattern, count)
 
         if not pos then
             last_match_pos = nil
@@ -73,7 +73,7 @@ function matcher_generators.generate_simple_matcher(options)
     end
 
     matcher.match_at_cursor = function(_options)
-        local match = utils.patterns.find_at_cursor(_options.buffer, pattern.regex)
+        local match = utils.patterns.find_at_cursor(_options.buffer, pattern)
 
         if not match then
             return nil, nil
@@ -117,22 +117,13 @@ function matcher_generators.generate_header_matcher(options)
                 utils.patterns.find_at_cursor(buffer, header_pattern.regex)
 
             if on_header then
-                if not include_header then
-                    match =
-                        utils.patterns.find(buffer, error_line_pattern.regex, count)
+                if include_header then
+                    match = on_header
+                else
+                    match = utils.patterns.find(buffer, error_line_pattern, count)
                 end
             else
-                local on_error_line =
-                    utils.patterns.find_at_cursor(buffer, error_line_pattern)
-
-                if on_error_line then
-                    match =
-                        utils.patterns.find(buffer, error_line_pattern.regex, count)
-                else
-                    utils.patterns.find(buffer, header_pattern.regex, count)
-                    match =
-                        utils.patterns.find(buffer, error_line_pattern.regex, count)
-                end
+                match = utils.patterns.find(buffer, error_line_pattern, count)
             end
         end
 
@@ -146,28 +137,25 @@ function matcher_generators.generate_header_matcher(options)
     matcher.match_start = function(_options)
         local buffer = _options.buffer
         local count = _options.count or 1
-        local header_pos = utils.patterns.find(buffer, header_pattern.regex, count)
-
-        if not header_pos then
-            return
-        end
-
-        local error_line_pos =
-            utils.patterns.find(buffer, error_line_pattern.regex, count)
-
-        if not error_line_pos then
-            last_match_pos = nil
-            return
-        end
+        local header_pos = utils.patterns.find(buffer, header_pattern, count)
+        local error_line_pos = utils.patterns.find(buffer, error_line_pattern, count)
 
         if include_header then
-            if header_pos.from.lnum <= error_line_pos.from.lnum then
-                last_match_pos = header_pos
-            else
+            if header_pos and error_line_pos then
+                if header_pos.from.lnum < error_line_pos.from.lnum then
+                    last_match_pos = header_pos
+                else
+                    last_match_pos = error_line_pos
+                end
+            elseif error_line_pos then
                 last_match_pos = error_line_pos
             end
         else
-            last_match_pos = error_line_pos
+            if error_line_pos then
+                last_match_pos = error_line_pos
+            else
+                last_match_pos = nil
+            end
         end
 
         return last_match_pos
@@ -176,7 +164,7 @@ function matcher_generators.generate_header_matcher(options)
     matcher.match_at_cursor = function(_options)
         -- TODO: Match header and find next error_line_pattern
         local match =
-            utils.patterns.find_at_cursor(_options.buffer, error_line_pattern.regex)
+            utils.patterns.find_at_cursor(_options.buffer, error_line_pattern)
 
         if not match then
             return nil, nil

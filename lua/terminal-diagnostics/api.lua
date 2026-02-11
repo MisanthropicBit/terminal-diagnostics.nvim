@@ -11,9 +11,12 @@ local utils = require("terminal-diagnostics.utils")
 
 ---@class terminal-diagnostics.ClosestMatch
 ---@field distance integer
----@field from     terminal-diagnostics.EditorPosition
----@field to       terminal-diagnostics.EditorPosition
+---@field match    terminal-diagnostics.Match?
 ---@field matcher  terminal-diagnostics.Matcher?
+
+---@class terminal-diagnostics.SelectOptions
+---@field lookahead boolean? Scan forward and try to find a match
+---@field outer     boolean? Select the "outer" (instead of inner) error message
 
 ---@class terminal-diagnostics.ApiResult
 ---@field match terminal-diagnostics.Match
@@ -40,14 +43,7 @@ local function get_closest_match(selected_matchers, match_options)
     ---@type terminal-diagnostics.ClosestMatch
     local closest_match = {
         distance = math.huge,
-        from = {
-            lnum = 0,
-            col = 0,
-        },
-        to = {
-            lnum = 0,
-            col = 0,
-        },
+        match = nil,
         matcher = nil,
     }
 
@@ -55,28 +51,16 @@ local function get_closest_match(selected_matchers, match_options)
         local match = matcher.match_start(match_options)
 
         if match then
-            local distance = match.from.lnum - match_options.lnum
+            local distance = math.abs(match.from.lnum - match_options.lnum)
 
-            -- Only consider matches that are positive or negative depending on direction
-            if match_options.count > 0 then
-                if distance <= 0 then
-                    goto continue
-                end
-            elseif match_options.count < 0 then
-                if distance >= 0 then
-                    goto continue
-                end
-            end
+            -- log.debug(matcher.name(), distance)
 
-            if math.abs(distance) < closest_match.distance then
-                closest_match.distance = math.abs(distance)
-                closest_match.from = match.from
-                closest_match.to = match.to
+            if distance ~= 0 and distance < closest_match.distance then
+                closest_match.distance = distance
+                closest_match.match = match
                 closest_match.matcher = matcher
             end
         end
-
-        ::continue::
     end
 
     return closest_match
@@ -121,11 +105,11 @@ function api.jump(options)
             end
         else
             if idx < math.abs(count) then
-                match_options.lnum = closest_match.to.lnum
-                match_options.col = closest_match.to.col
+                match_options.lnum = closest_match.match.to.lnum
+                match_options.col = closest_match.match.to.col
             else
-                match_options.lnum = closest_match.from.lnum
-                match_options.col = closest_match.from.col - 1
+                match_options.lnum = closest_match.match.from.lnum
+                match_options.col = closest_match.match.from.col - 1
             end
 
             idx = idx + 1
@@ -151,11 +135,10 @@ function api.jump(options)
     }
 end
 
----@param buffer integer
 ---@param type terminal-diagnostics.OpenType
----@param match any
-local function open_match(buffer, type, match)
-    local abspath = vim.fs.abspath(match.path)
+---@param result terminal-diagnostics.ApiResult
+local function open_match(type, result)
+    local abspath = vim.fs.abspath(result.data.path)
 
     if vim.fn.filereadable(abspath) == 0 then
         notify.error("File '%s' is not readable", abspath)
@@ -171,29 +154,38 @@ local function open_match(buffer, type, match)
     elseif type == OpenType.Edit then
         vim.cmd.edit(abspath)
     elseif type == OpenType.Preview then
+        -- TODO: Set cursor in preview window
         vim.cmd.pedit(abspath)
     elseif type == OpenType.Float then
         ui.float.open_preview({
-            path = abspath,
+            target = abspath,
+            width = 0.5,
+            height = 0.45,
             enter = true,
-            title = vim.api.nvim_buf_get_name(buffer),
+            title = abspath,
             title_pos = "left",
-            posthook = function()
-                vim.api.nvim_win_set_buf(0, buffer)
-                vim.api.nvim_win_set_cursor(0, { match.lnum, match.col - 1 })
+            border = "rounded",
+            close_on_move = true,
+            post_open_hook = function()
+                vim.api.nvim_win_set_cursor(
+                    0,
+                    { result.data.lnum, result.data.col - 1 }
+                )
             end,
         })
     else
         assert(false, ("Invalid open type '%s'"):format(type))
     end
 
-    vim.api.nvim_win_set_cursor(0, { match.lnum - 1, match.col })
+    if type ~= OpenType.Preview then
+        vim.api.nvim_win_set_cursor(0, { result.data.lnum, result.data.col - 1 })
+    end
 end
 
 ---@param location { [1]: terminal-diagnostics.Match, [2]: terminal-diagnostics.MatchResult }?
 ---@return boolean
 local function last_jump_location_is_valid(location)
-    if not location then
+    if not location or not location[1] then
         return false
     end
 
@@ -209,6 +201,7 @@ local function last_jump_location_is_valid(location)
 end
 
 ---@param buffer integer
+---@parm options table
 ---@return terminal-diagnostics.ApiResult?
 function api.find_at_cursor(buffer, options)
     local match, data
@@ -240,14 +233,40 @@ end
 ---@param options table
 function api.open(options)
     local buffer = vim.api.nvim_get_current_buf()
-    local match = api.find_at_cursor(buffer)
+    local result = api.find_at_cursor(buffer)
 
-    if not match then
+    if not result then
         notify.error("Found no matches under cursor")
+        return
+    elseif not result.data.path then
+        notify.error("Match does not contain a path to open")
         return
     end
 
-    open_match(buffer, options.type, match)
+    open_match(options.type, result)
+end
+
+---@param options terminal-diagnostics.SelectOptions?
+function api.select(options)
+    local result = api.find_at_cursor(0, {})
+
+    if not result then
+        if options and options.lookahead then
+            result = api.jump({ count = 1, wrap = false })
+
+            if not result then
+                return
+            end
+        else
+            return
+        end
+    end
+
+    local match = result.match
+
+    vim.api.nvim_win_set_cursor(0, { match.to.lnum, match.to.col - 1 })
+    vim.cmd([[normal! v]])
+    vim.api.nvim_win_set_cursor(0, { match.from.lnum, match.from.col - 1 })
 end
 
 return api

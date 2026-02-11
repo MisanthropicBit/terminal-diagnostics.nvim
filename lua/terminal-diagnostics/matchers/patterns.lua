@@ -130,7 +130,7 @@ function patterns.get_all()
 end
 
 ---@generic T
----@param idx integer?
+---@param idx (integer | { index: integer, resolve: fun(value: any): T })?
 ---@param submatches string[]
 ---@param type_converter (fun(value: unknown): T)?
 ---@return T?
@@ -139,10 +139,20 @@ local function extract(idx, submatches, type_converter)
         return
     end
 
-    local value = submatches[idx]
+    local _idx, resolver
 
-    if type(type_converter) == "function" then
-        return type_converter(value)
+    if type(idx) == "number" then
+        _idx = idx
+        resolver = type_converter
+    else
+        _idx = idx.index
+        resolver = idx.resolve
+    end
+
+    local value = submatches[_idx]
+
+    if type(resolver) == "function" then
+        return resolver(value)
     end
 
     return value

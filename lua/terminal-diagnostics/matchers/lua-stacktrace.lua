@@ -17,11 +17,11 @@ local error_line = {
     col = 3,
 }
 
-local jest = generators.generate_header_matcher({
+local lua_stacktrace = generators.generate_header_matcher({
     name = "lua-stacktrace",
     kind = "stacktrace",
     header_pattern = header,
     error_line_pattern = error_line,
 })
 
-return jest
+return lua_stacktrace

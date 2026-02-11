@@ -1,51 +1,106 @@
 local float = {}
 
-local function create_preview_win(buffer, bufpos, zindex, options)
-    local enter = options.enter or options.enter or false
-    local cur_win = vim.api.nvim_get_current_win()
+local notify = require("terminal-diagnostics.notify")
 
-    return vim.api.nvim_open_win(buffer, enter, {
-        relative = "win",
-        width = options.width,
-        height = options.height,
-        border = options.border,
-        bufpos = bufpos,
-        zindex = zindex,
-        win = vim.api.nvim_get_current_win(),
-        title = options.title,
-        title_pos = options.title_pos or "left",
-    })
+---@class terminal-diagnostics.FloatOptions
+---@field target string | integer?
+---@field width integer?
+---@field height integer?
+---@field enter boolean?
+---@field title string?
+---@field title_pos string?
+---@field post_open_hook fun()?
+---@field close_on_move boolean?
+---@field zindex integer?
+---@field border ('none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[])?
+
+local default_win_open_options = {
+    width = 0.5,
+    height = 0.45,
+    enter = true,
+    title_pos = "left",
+    border = "rounded",
+    close_on_move = true,
+}
+
+local function clamp(value)
+    return math.floor(value + 0.5)
 end
 
-function float.open_preview(target, position, options)
-    local buffer = type(target) == "string" and vim.uri_to_bufnr(target) or target
-    local bufpos = { vim.fn.line "." - 1, vim.fn.col "." } -- FOR relative='win'
-    local dismiss = options.dismiss_on_move
-
-    options = options or {}
-
-    local preview_window = create_preview_win(buffer, bufpos, options.zindex, options)
-
-    if options.opacity then
-        vim.api.nvim_set_option_value("winblend", options.opacity, { win = preview_window })
+---@param value integer
+---@param max_value integer
+---@return integer
+local function resolve_dimension(value, max_value)
+    if not value then
+        value = 0.5
     end
 
-    vim.api.nvim_win_set_var(preview_window, "terminal-diagnostics.nvim", 1)
-
-    if dismiss then
-        -- TODO: Convert to lua
-        vim.api.nvim_command(("autocmd CursorMoved <buffer> ++once lua require('goto-preview').dismiss_preview(%d)"):format(preview_window))
+    if value <= 1.0 then
+        return clamp(value * max_value)
     end
 
-    -- Set position of the preview buffer equal to the target position so that
-    -- correct preview position shows
-    vim.api.nvim_win_set_cursor(preview_window, position)
+    return clamp(value)
+end
 
-    if type(options.post_open_hook) == "function" then
-        local success, result = pcall(options.post_open_hook, buffer, preview_window)
+---@param width integer
+---@param height integer
+---@return integer, integer
+local function resolve_dimensions(width, height)
+    return resolve_dimension(width, vim.o.columns),
+        resolve_dimension(height, vim.o.lines)
+end
+
+---@param options terminal-diagnostics.FloatOptions?
+function float.open_preview(options)
+    local _options = vim.tbl_extend("force", default_win_open_options, options or {})
+
+    -- TODO: Validate other options
+    vim.validate("post_open_hook", _options.post_open_hook, "function")
+
+    local buffer = vim.api.nvim_create_buf(true, false)
+    local bufpos = { vim.fn.line(".") - 1, vim.fn.col(".") }
+
+    _options.width, _options.height = resolve_dimensions(_options.width, _options.height)
+
+    local window = vim.api.nvim_open_win(buffer, _options.enter, {
+        relative = "win",
+        width = _options.width,
+        height = _options.height,
+        border = _options.border,
+        bufpos = bufpos,
+        zindex = _options.zindex,
+        win = vim.api.nvim_get_current_win(),
+        title = _options.title,
+        title_pos = _options.title_pos,
+    })
+
+    vim.api.nvim_win_set_var(window, "terminal-diagnostics.nvim", 1)
+
+    if _options.close_on_move and not _options.enter then
+        vim.api.nvim_create_autocmd("CursorMoved", {
+            buffer = buffer,
+            once = true,
+            callback = function()
+                -- TODO:
+            end,
+        })
     end
 
-    return preview_window
+    if type(_options.target) == "number" then
+        vim.cmd.buffer(_options.target)
+    else
+        vim.cmd.edit(_options.target)
+    end
+
+    if _options.post_open_hook then
+        local success, err = pcall(_options.post_open_hook, buffer, window)
+
+        if not success then
+            notify.error("Failed calling post_open_hook: " .. tostring(err))
+        end
+    end
+
+    return window
 end
 
 return float
