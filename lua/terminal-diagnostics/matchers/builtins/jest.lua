@@ -1,13 +1,13 @@
 local generators = require("terminal-diagnostics.matchers.generators")
 
 ---@type terminal-diagnostics.MatchSpec
-local header = {
+local header_spec = {
     pattern = [[\v\s*FAIL\s+(\S+)]],
     path = 1,
 }
 
 ---@type terminal-diagnostics.MatchSpec
-local error_line = {
+local error_line_spec = {
     pattern = [[\vat \S+ \((\S+):(\d+):(\d+)\)]],
     path = 1,
     path_kind = "relative",
@@ -15,11 +15,9 @@ local error_line = {
     col = 3,
 }
 
-local jest = generators.generate_header_matcher({
+return generators.generate_header_matcher({
     name = "jest",
     kind = "test",
-    header_spec = header,
-    error_spec = error_line,
+    header_spec = header_spec,
+    error_spec = error_line_spec,
 })
-
-return jest

@@ -10,4 +10,6 @@ end
 function terminal_diagnostics.setup()
 end
 
+terminal_diagnostics.api = require("terminal-diagnostics.api")
+
 return terminal_diagnostics

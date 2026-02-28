@@ -1,3 +1,4 @@
+-- TODO: Rename to 'search'?
 local patterns = {}
 
 ---@class terminal-diagnostics.EditorPosition
@@ -9,6 +10,16 @@ local patterns = {}
 ---@field submatches string[]
 ---@field from       terminal-diagnostics.EditorPosition
 ---@field to         terminal-diagnostics.EditorPosition
+
+---@alias terminal-diagnostics.SubGroupResult { start_col: integer, end_col: integer }
+
+---@class terminal-diagnostics.SubgroupParseResult
+---@field path     terminal-diagnostics.SubGroupResult?
+---@field lnum     terminal-diagnostics.SubGroupResult?
+---@field col      terminal-diagnostics.SubGroupResult?
+---@field severity terminal-diagnostics.SubGroupResult?
+---@field message  terminal-diagnostics.SubGroupResult?
+---@field code     terminal-diagnostics.SubGroupResult?
 
 local function keep_cursor(func)
     local cursor = vim.api.nvim_win_get_cursor(0)
@@ -33,7 +44,7 @@ local function create_match(buffer, spec, first_match, second_match)
         {}
     ), "\n") }
 
-    local submatches = vim.fn.matchstrlist(text, spec.regex, { submatches = true })
+    local submatches = vim.fn.matchstrlist(text, spec.pattern, { submatches = true })
 
     return {
         text = text,
@@ -77,7 +88,7 @@ function patterns.find(buffer, spec, count)
     local match
     local _count = count or 1
     local extra_flags = _count > 0 and "W" or "bW" -- TODO: Make wrap configurable
-    local pattern = spec.regex
+    local pattern = spec.pattern
 
     -- TODO: Does this find something on the same line as a valid pattern
     keep_cursor(function()
@@ -123,6 +134,83 @@ function patterns.find_at_cursor(buffer, spec)
     end
 
     return match
+end
+
+---@param line string
+---@param match_spec terminal-diagnostics.MatchSpec
+---@return terminal-diagnostics.Match?
+function patterns.find_in_line(line, match_spec)
+    local pattern = match_spec.pattern
+    local match, start_col, end_col = vim.fn.matchstrpos(line, pattern)
+
+    if start_col == -1 then
+        return
+    end
+
+    local submatches = vim.fn.matchstrlist({ line }, match_spec.pattern, { submatches = true })
+
+    return {
+        text = match,
+        submatches = submatches,
+        from = { lnum = -1, col = start_col },
+        to = { lnum = -1, col = end_col },
+    }
+end
+
+--- Parse the subgroups in a pattern and figure out their locations in the
+--- matched string
+---@param match_string string
+---@param spec         terminal-diagnostics.MatchSpec
+---@return terminal-diagnostics.SubgroupParseResult
+function patterns.parse_subgroups(match_string, spec)
+    -- NOTE: This is a horrible solution but there is currently no builtin solution
+    -- TODO: Does not work for multiline patterns
+    local idx = 1
+    local submatches = {}
+    local pattern = spec.pattern
+
+    repeat
+        -- Find the next unescaped regex group
+        local _, start_col, end_col = unpack(
+            vim.fn.matchstrpos(pattern, [[\v(\\|\%)@<!\(.{-}(\\|\%)@<!\)]], idx, 1)
+        )
+
+        if start_col == -1 then
+            break
+        end
+
+        -- Reconstruct the pattern with match markers around the group that we found
+        local subpattern = pattern:sub(1, start_col)
+            .. "\\zs"
+            .. pattern:sub(start_col + 1, end_col)
+            .. "\\ze"
+            .. pattern:sub(end_col + 1)
+
+        local _, sub_start_col, sub_end_col =
+            unpack(vim.fn.matchstrpos(match_string, subpattern))
+
+        table.insert(
+            submatches,
+            { start_col = sub_start_col + 1, end_col = sub_end_col }
+        )
+
+        idx = end_col + 1
+    until idx > #pattern
+
+    ---@type terminal-diagnostics.SubgroupParseResult
+    local results = {}
+    local subgroups = require("terminal-diagnostics.matchers").match_spec_keys()
+
+    for _, name in ipairs(subgroups) do
+        local group_idx = spec[name]
+        local submatch = submatches[group_idx]
+
+        if group_idx and submatch then
+            results[name] = submatches[group_idx]
+        end
+    end
+
+    return results
 end
 
 return patterns
