@@ -3,8 +3,7 @@ local generators = require("terminal-diagnostics.matchers.generators")
 ---@type terminal-diagnostics.MatchSpec
 local pattern = {
     name = "tsc",
-    regex =
-    "\\v^([^[:space:]].*)[\\(:](\\d+)[,:](\\d+)%(\\):\\s+|\\s+-\\s+)(error|warning|info)\\s+TS(\\d+)\\s*:\\s*(.*)$",
+    pattern = "\\v^([^[:space:]].*)[\\(:](\\d+)[,:](\\d+)%(\\):\\s+|\\s+-\\s+)(error|warning|info)\\s+TS(\\d+)\\s*:\\s*(.*)$",
     path_kind = "relative",
     path = 1,
     lnum = 2,

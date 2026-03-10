@@ -27,6 +27,7 @@ local MARK_COMMAND_END = OSC_133 .. "D"
 
 local autocmd_handler_id
 
+-- TODO: Probably doesn't work if multiple shells are used in the same session
 local has_prompt_markers = false
 
 -- If the shell emits command markers then use those instead of the prompt markers

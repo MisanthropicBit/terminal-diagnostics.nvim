@@ -10,7 +10,7 @@ end
 
 ---@type terminal-diagnostics.MatchSpec
 local error_line = {
-    regex = [[\v^(error|warning|help|note)%(\[(.+)\])?: (.+)\n\s+--\> (.+):(\d+):(\d+)]],
+    pattern = [[\v^(error|warning|help|note)%(\[(.+)\])?: (.+)\n\s+--\> (.+):(\d+):(\d+)]],
     severity = {
         index = 1,
         resolve = resolve_severity,

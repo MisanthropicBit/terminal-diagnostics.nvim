@@ -2,7 +2,7 @@ local generators = require("terminal-diagnostics.matchers.generators")
 
 ---@type terminal-diagnostics.MatchSpec
 local header = {
-    regex = [[\v^lua(jit)?: (.+)\.lua:(\d+): (.+)$]],
+    pattern = [[\v^lua(jit)?: (.+)\.lua:(\d+): (.+)$]],
     path = 2,
     lnum = 3,
     message = 4,
@@ -10,7 +10,7 @@ local header = {
 
 ---@type terminal-diagnostics.MatchSpec
 local error_line = {
-    regex = [[\v\s+(.+)\.lua:(\d+): (in .+)$]],
+    pattern = [[\v\s+(.+)\.lua:(\d+): (in .+)$]],
     path = 1,
     path_kind = "relative",
     lnum = 2,
@@ -20,8 +20,8 @@ local error_line = {
 local lua_stacktrace = generators.generate_header_matcher({
     name = "lua-stacktrace",
     kind = "stacktrace",
-    header_pattern = header,
-    error_line_pattern = error_line,
+    header_spec = header,
+    error_spec = error_line,
 })
 
 return lua_stacktrace

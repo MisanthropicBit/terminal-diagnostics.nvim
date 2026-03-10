@@ -1,6 +1,6 @@
 local builtins = {}
 
-local builtin_command_specs = { "tsc" }
+local builtin_command_specs = { "tsc", "eslint-compact" }
 
 ---@param filter string[]?
 ---@return terminal-diagnostics.CommandSpec[]

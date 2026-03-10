@@ -32,17 +32,40 @@ function CommandSpec.new(name, kind, matcher, options)
     vim.validate("matcher", matcher, matchers.validator, "a Matcher class instance")
     vim.validate("options.parser", _options.parser, "table", true, "a Parser class instance") -- TODO: Add class validator
 
-    return setmetatable({
+    local command_spec = setmetatable({
         _name = name,
         _kind = kind,
         _matcher = matcher,
         _parser = _options.parser or nil,
     }, CommandSpec)
+
+    command_spec._parser = _options.parser
+
+    if not command_spec._parser then
+        command_spec._parser = require("terminal-diagnostics.parsers.generators").from_simple_matcher(command_spec, {})
+    end
+
+    return command_spec
+end
+
+---@return string
+function CommandSpec:name()
+    return self._name
+end
+
+---@return terminal-diagnostics.CommandKind
+function CommandSpec:kind()
+    return self._kind
 end
 
 ---@return terminal-diagnostics.Matcher
 function CommandSpec:matcher()
     return self._matcher
+end
+
+---@return terminal-diagnostics.parser.Parser
+function CommandSpec:parser()
+    return self._parser
 end
 
 return CommandSpec

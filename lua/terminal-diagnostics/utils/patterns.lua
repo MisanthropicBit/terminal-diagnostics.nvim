@@ -141,7 +141,7 @@ end
 ---@return terminal-diagnostics.Match?
 function patterns.find_in_line(line, match_spec)
     local pattern = match_spec.pattern
-    local match, start_col, end_col = vim.fn.matchstrpos(line, pattern)
+    local match, start_col, end_col = unpack(vim.fn.matchstrpos(line, pattern))
 
     if start_col == -1 then
         return
@@ -151,10 +151,27 @@ function patterns.find_in_line(line, match_spec)
 
     return {
         text = match,
-        submatches = submatches,
+        submatches = submatches[1] and submatches[1].submatches or {},
         from = { lnum = -1, col = start_col },
         to = { lnum = -1, col = end_col },
     }
+end
+
+---@param lines string[]
+---@param match_spec terminal-diagnostics.MatchSpec
+---@return integer
+function patterns.find_in_lines(lines, match_spec)
+    local pattern = match_spec.pattern
+
+    for lnum, line in ipairs(lines) do
+        local _, start_col, _ = unpack(vim.fn.matchstrpos(line, pattern))
+
+        if start_col ~= -1 then
+            return lnum
+        end
+    end
+
+    return -1
 end
 
 --- Parse the subgroups in a pattern and figure out their locations in the
