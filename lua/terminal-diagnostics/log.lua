@@ -20,6 +20,11 @@ local MAX_SIZE_BYTES = 5e+7 -- 50 MB
 
 ---@alias terminal-diagnostics.LogRotationStrategy fun(logger: terminal-diagnostics.Logger)
 
+local function newline()
+    -- TODO: Port over Path.newline
+    return "\n"
+end
+
 --- Rotation strategy where the same log file is cleared and reused
 ---@param max_size_bytes integer
 ---@return terminal-diagnostics.LogRotationStrategy
@@ -31,7 +36,7 @@ function log.rotation_strategy.reuse(max_size_bytes)
             local handle = logger:handle()
             io.close(handle)
 
-            logger:set_handle(assert(io.open(logger:path():absolute(), "a+")))
+            logger:set_handle(assert(io.open(logger:path(), "a+")))
         end
     end
 end
@@ -57,7 +62,7 @@ end
 ---@field warn  terminal-diagnostics.LogFunc
 ---@field error terminal-diagnostics.LogFunc
 ---
----@field private _path terminal-diagnostics.Path
+---@field private _path string
 ---@field private _level integer
 ---@field private _handle file*
 ---@field private _rotate terminal-diagnostics.LogRotationStrategy
@@ -94,12 +99,13 @@ function Logger.new(filename, options)
     local path
 
     if _options.path then
-        path = Path.new(_options.path)
+        path = _options.path
     else
-        path = Path.new(vim.fn.stdpath("log"), filename):add_extension("log")
+        path = vim.fs.joinpath(vim.fn.stdpath("log"), filename) .. ".log"
     end
 
-    local handle = assert(io.open(path:absolute(), "a+"))
+    ---@cast path -nil
+    local handle = assert(io.open(path, "a+"))
 
     ---@type terminal-diagnostics.Logger
     ---@diagnostic disable-next-line: missing-fields
@@ -166,11 +172,11 @@ function Logger:log(level_name, ...)
     self._rotate(self)
 
     -- TODO: When should this be closed? Does it close itself when quitting neovim?
-    self._handle:write(table.concat(parts, " "), Path.newline)
+    self._handle:write(table.concat(parts, " "), newline())
     self._handle:flush()
 end
 
----@return terminal-diagnostics.Path
+---@return string
 function Logger:path()
     return self._path
 end
