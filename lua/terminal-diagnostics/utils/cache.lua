@@ -15,7 +15,7 @@ Cache.__index = Cache
 ---@param options terminal-diagnostics.CacheOptions?
 ---@return terminal-diagnostics.Cache
 function Cache.new(values, options)
-    vim.validate("values", values, "table")
+    vim.validate("values", values, "table", true)
     vim.validate("options.default", options and options.default, "function", true)
 
     local cache = setmetatable({
