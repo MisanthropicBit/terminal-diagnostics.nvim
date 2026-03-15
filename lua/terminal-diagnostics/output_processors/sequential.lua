@@ -95,31 +95,35 @@ function SequentialOutputProcessor.process(event, options)
         diagnostics.set(event.buffer, terminal_diagnostics, {})
     end
 
+    local populate_list = _options.quickfix or _options.locationlist
+    local project_diagnostics = {}
+
     -- 4. Create diagnostics for the project from parse results
-    if _options.diagnostics then
-        local all_diagnostics = diagnostics.from_parse_results(parse_results)
+    if _options.diagnostics or populate_list then
+        project_diagnostics = diagnostics.from_parse_results(parse_results)
 
         -- TODO: Need to resolve paths to absolute paths and load the buffers
         -- for those files. Alternatively, set diagnostics for the buffers that
         -- are already open and cache the rest. When a new buffer is opened,
         -- check if the filename matches, set diagnostics, and clear cache entry
         -- (what if the buffer is unloaded and then loaded again?)
-        diagnostics.set(0, all_diagnostics, {})
+        if _options.diagnostics and #project_diagnostics > 0 then
+            diagnostics.set(0, project_diagnostics, {})
+        end
     end
 
     -- 4. Populate the quickfix/location list with the diagnostics (let user do this via autocmds?)
-    if _options.quickfix or _options.locationlist then
+    if populate_list and #project_diagnostics > 0 then
         -- TODO: Do we add the terminal diagnostics or the ordinary diagnostics
         -- to the lists?
         local sources = vim.tbl_map(function(spec)
             return spec:name()
         end, command_specs)
 
-        -- local qf_items = vim.diagnostic.toqflist()
+        -- TODO: Need the window nr in event for location list
 
-        diagnostics.setqflist({
+        diagnostics.setqflist(project_diagnostics, {
             open = true,
-            namespace = diagnostics.namespace_id(),
             title = ("terminal-diagnostics.nvim (%s)"):format(vim.iter(sources):join(", ")),
         })
     end

@@ -1,7 +1,5 @@
 local diagnostics = {}
 
-local config = require("terminal-diagnostics.config")
-
 local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
 
 ---@return integer
@@ -114,6 +112,21 @@ end
 ---@param options vim.diagnostic.Opts?
 function diagnostics.set(buffer, _diagnostics, options)
     vim.diagnostic.set(ns_id, buffer, _diagnostics, options)
+end
+
+function diagnostics.setqflist(_diagnostics, options)
+    local qf_items = vim.diagnostic.toqflist(_diagnostics)
+
+    -- TODO: Use context to replace existing quickfix?
+    vim.fn.setqflist({}, "a", {
+        items = qf_items,
+        title = options.title or "terminal-diagnostics.nvim",
+        context = { is_terminal_diagnostics = true },
+    })
+
+    if options.open then
+        vim.cmd.copen()
+    end
 end
 
 ---@param options vim.diagnostic.Opts?
