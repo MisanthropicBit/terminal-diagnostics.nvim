@@ -22,8 +22,12 @@ local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
 ---@field match terminal-diagnostics.Match
 ---@field data  terminal-diagnostics.MatchResult
 
+---@class terminal-diagnostics.LastJumpLocation
+---@field match terminal-diagnostics.Match
+---@field result terminal-diagnostics.MatchResult
+
 --- Save the last location where we jumped to for quickly opening a location
----@type { [1]: terminal-diagnostics.Match, [2]: terminal-diagnostics.MatchResult }?
+---@type terminal-diagnostics.ApiResult?
 local last_jump_location
 
 ---@param command_specs terminal-diagnostics.CommandSpec[]
@@ -43,8 +47,6 @@ local function get_closest_match(command_specs, match_options)
 
         if match then
             local distance = math.abs(match.from.lnum - match_options.lnum)
-
-            -- log.debug(matcher.name(), distance)
 
             if distance ~= 0 and distance < closest_match.distance then
                 closest_match.distance = distance
@@ -118,7 +120,7 @@ function jump.jump(options)
 
     local match, data = closest_match.matcher.match(match_options)
 
-    last_jump_location = { match, data }
+    last_jump_location = { match = match, data = data }
 
     -- if config.jump.posthook then
     --     config.jump.posthook({

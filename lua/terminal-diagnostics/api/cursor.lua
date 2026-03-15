@@ -30,7 +30,8 @@ function cursor.find_at_cursor(buffer, options)
 
     if valid then
         ---@cast last_jump_location -nil
-        match = last_jump_location[1]
+        match = last_jump_location.match
+        data = last_jump_location.data
     else
         last_jump_location = nil
         local command_specs = builtins.get()
