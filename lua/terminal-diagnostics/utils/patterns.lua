@@ -114,14 +114,14 @@ function patterns.find_at_cursor(buffer, spec)
     local match
     local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
     col = col + 1
-    local first_match = vim.fn.searchpos(spec.regex, "cnbW")
+    local first_match = vim.fn.searchpos(spec.pattern, "cnbW")
 
     -- TODO: Allow overriding second condition for multiline patterns
     if first_match[1] == 0 or first_match[1] ~= lnum then
         return
     end
 
-    local second_match = vim.fn.searchpos(spec.regex, "cneW")
+    local second_match = vim.fn.searchpos(spec.pattern, "cneW")
 
     if second_match[1] == 0 or second_match[1] ~= lnum then
         return
@@ -187,7 +187,7 @@ function patterns.parse_subgroups(match_string, spec)
     local pattern = spec.pattern
 
     repeat
-        -- Find the next unescaped regex group
+        -- Find the next unescaped pattern group
         local _, start_col, end_col = unpack(
             vim.fn.matchstrpos(pattern, [[\v(\\|\%)@<!\(.{-}(\\|\%)@<!\)]], idx, 1)
         )

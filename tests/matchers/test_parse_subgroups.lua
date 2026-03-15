@@ -8,7 +8,7 @@ local parse_subgroup = require("lua.terminal-diagnostics.matchers.parse_subgroup
 -- TODO: Expose so we do not redefine them in tests
 local tsc_spec = {
     name = "tsc",
-    regex =
+    pattern =
     "\\v^([^[:space:]]*)[\\(:](\\d+)[,:](\\d+)%(\\):\\s+|\\s+-\\s+)(error|warning|info)\\s+TS(\\d+)\\s*:\\s*(.*)$",
     path_kind = "relative",
     path = 1,
@@ -23,7 +23,7 @@ local tsc_match =
 "main.ts:6:5 - error TS2322: Type 'null' is not assignable to type 'Person'."
 
 local jest_spec = {
-    regex = [[\vat \S+ \((\S+):(\d+):(\d+)\)]],
+    pattern = [[\vat \S+ \((\S+):(\d+):(\d+)\)]],
     path = 1,
     path_kind = "relative",
     lnum = 2,

@@ -5,7 +5,7 @@ local api = require("terminal-diagnostics.api")
 
 local spec = {
     name = "tsc",
-    regex =
+    pattern =
     "\\v^([^[:space:]].*)[\\(:](\\d+)[,:](\\d+)%(\\):\\s+|\\s+-\\s+)(error|warning|info)\\s+TS(\\d+)\\s*:\\s*(.*)$",
     path_kind = "relative",
     path = 1,
