@@ -23,7 +23,7 @@ local matchers = {}
 
 ---@class (exact) terminal-diagnostics.MatchResult
 ---@field name     string?
----@field path     string
+---@field paths    string[]
 ---@field lnum     integer?
 ---@field col      integer?
 ---@field severity string?
@@ -83,17 +83,24 @@ local function resolve_value(idx, submatches, type_converter)
     return value
 end
 
----@param path string?
+---@param path string
 ---@param path_kind string?
 local function resolve_path(path, path_kind)
     if not path then
-        return ""
+        return {}
     end
 
     if not path_kind or path_kind == "relative" then
-        return vim.fs.abspath(path)
+        local paths = vim.fs.find(path, {
+            limit = math.huge,
+            upward = false,
+            type = "file",
+            -- path = "", TODO: Should be the project root
+        })
+
+        return paths
     elseif path_kind == "absolute" then
-        return path
+        return { path }
     end
 end
 
@@ -129,7 +136,7 @@ function matchers.extract_from_match(match_spec, match)
     -- TODO: Account for cases where only a path is known but no position
     -- TODO: Allow all keys to support a function for full control
     return {
-        path = resolve_path(submatches[match_spec.path], match_spec.path_kind),
+        paths = resolve_path(submatches[match_spec.path], match_spec.path_kind),
         lnum = resolve_value(match_spec.lnum, submatches, tonumber),
         col = resolve_value(match_spec.col, submatches, tonumber),
         severity = resolve_value(match_spec.severity,submatches, resolve_severity),
