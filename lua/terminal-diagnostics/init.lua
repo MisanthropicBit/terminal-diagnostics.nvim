@@ -21,12 +21,11 @@ function terminal_diagnostics.setup(config)
     )
 
     handler.start(function(event)
-        vim.print("processing")
         local SequentialOutputProcessor =
             require("terminal-diagnostics.output_processors.sequential")
         local processor = SequentialOutputProcessor.new()
 
-        processor.process(event, { quickfix = true })
+        processor.process(event, { quickfix = true, terminal_diagnostics = true })
     end)
 end
 

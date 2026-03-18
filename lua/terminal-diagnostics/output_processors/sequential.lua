@@ -10,8 +10,9 @@ local utils = require("terminal-diagnostics.utils")
 ---@class terminal-diagnostics.SequentialOutputProcessorOptions
 ---@field terminal_diagnostics boolean?
 ---@field diagnostics          boolean?
----@field quickfix             boolean?
----@field locationlist         boolean?
+---@field quickfix             (boolean | terminal-diagnostics.QuickfixOptions)?
+---@field locationlist         (boolean | terminal-diagnostics.QuickfixOptions)?
+---@field trouble              boolean?
 
 -- TODO: Emit autocmd events after processing
 -- TODO: Create clickable links for error codes?
@@ -74,7 +75,7 @@ function SequentialOutputProcessor.process(event, options)
 
     for _, command_spec in ipairs(command_specs) do
         local parser = command_spec:parser()
-        local _parse_results = parser.parse(output)
+        local _parse_results = parser.parse(output, { offset = event.output_pos.start.lnum })
 
         if #_parse_results == 0 then
             log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
@@ -95,7 +96,7 @@ function SequentialOutputProcessor.process(event, options)
         diagnostics.set(event.buffer, terminal_diagnostics, {})
     end
 
-    local populate_list = _options.quickfix or _options.locationlist
+    local populate_list = _options.quickfix ~= nil or _options.locationlist ~= nil
     local project_diagnostics = {}
 
     -- 4. Create diagnostics for the project from parse results
@@ -124,6 +125,7 @@ function SequentialOutputProcessor.process(event, options)
 
         diagnostics.setqflist(project_diagnostics, {
             open = true,
+            focus = false,
             title = ("terminal-diagnostics.nvim (%s)"):format(vim.iter(sources):join(", ")),
         })
     end

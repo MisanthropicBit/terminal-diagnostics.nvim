@@ -2,8 +2,6 @@ local url = {}
 
 -- An implementation of RFC 1866, mainly for the application/x-www-form-urlencoded mimetype
 
-local bits = require("terminal-diagnostics.utils.bits")
-
 ---@class terminal-diagnostics.UrlCodecOptions
 ---@field decode_plus_as_space boolean
 
@@ -32,8 +30,8 @@ local reserved = {
 ---@param byte integer
 local function url_encode_byte(list, byte)
     table.insert(list, "%")
-    table.insert(list, ("%x"):format(bits.rshift(byte, 4)))
-    table.insert(list, ("%x"):format(bits.band(byte, 0xf)))
+    table.insert(list, ("%x"):format(bit.rshift(byte, 4)))
+    table.insert(list, ("%x"):format(bit.band(byte, 0xf)))
 end
 
 ---@param value string
@@ -94,7 +92,7 @@ function url.decode_with(value, options)
             local v1 = tonumber(value:sub(i + 1, i + 1), 16)
             local v2 = tonumber(value:sub(i + 2, i + 2), 16)
 
-            table.insert(result, string.char(bits.bor(bits.lshift(v1, 4), v2)))
+            table.insert(result, string.char(bit.bor(bit.lshift(v1, 4), v2)))
             i = i + 3
         end
     end

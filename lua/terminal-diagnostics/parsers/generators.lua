@@ -9,14 +9,15 @@ local utils = require("terminal-diagnostics.utils")
 ---@param command_spec terminal-diagnostics.CommandSpec
 ---@param options terminal-diagnostics.parser.GeneratorOptions
 ---@return terminal-diagnostics.parser.Parser
-function generators.from_simple_matcher( command_spec, options)
+function generators.from_simple_matcher(command_spec, options)
     ---@type terminal-diagnostics.parser.Parser
     local parser = {
-        parse = function(lines)
+        parse = function(lines, parse_options)
             ---@type terminal-diagnostics.parser.ParseResult[]
             local results = {}
             local start_marker
             local specs = command_spec:matcher().specs()
+            local offset = parse_options and parse_options.offset or 0
 
             for lnum, line in ipairs(lines) do
                 for _, spec in ipairs(specs) do
@@ -42,8 +43,8 @@ function generators.from_simple_matcher( command_spec, options)
 
                         parse_result.source = command_spec:name()
                         parse_result.kind = command_spec:kind()
-                        parse_result.start = { lnum = lnum, col = match.from.col }
-                        parse_result.end_ = { lnum = lnum, col = match.to.col }
+                        parse_result.start = { lnum = lnum + offset, col = match.from.col }
+                        parse_result.end_ = { lnum = lnum + offset, col = match.to.col }
 
                         table.insert(results, parse_result)
 

@@ -34,7 +34,7 @@ end
 
 ---@param key string | integer
 function Cache:get(key)
-    if type(self.default) == "function" then
+    if not self.cache[key] and type(self.default) == "function" then
         self.cache[key] = self.default(key)
     end
 

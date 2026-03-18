@@ -15,4 +15,5 @@ return {
     patterns = require("terminal-diagnostics.utils.patterns"),
     keep_cursor = keep_cursor,
     get_cursor = get_cursor,
+    url = require("terminal-diagnostics.utils.url"),
 }

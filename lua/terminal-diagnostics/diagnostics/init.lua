@@ -1,39 +1,52 @@
 local diagnostics = {}
 
 local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
+local processor
+
+---@class terminal-diagnostics.QuickfixOptions
+---@field open  boolean?
+---@field focus boolean?
+---@field title string?
+
+---@class terminal-diagnostics.DiagnosticsBufferOptions : terminal-diagnostics.SequentialOutputProcessorOptions
 
 ---@return integer
 function diagnostics.namespace_id()
     return ns_id
 end
 
----@param source string
 ---@param diagnostic vim.Diagnostic
 ---@return vim.Diagnostic
-function diagnostics.create(source, diagnostic)
-    return vim.tbl_extend("force", diagnostic, {
-        source = source or "terminal-diagnostics.nvim",
-        namespace = ns_id,
-        user_data = { generated_by = "terminal-diagnostics.nvim" },
-    })
+function diagnostics.create(diagnostic)
+    return vim.tbl_extend(
+        "force",
+        {
+            source = "terminal-diagnostics.nvim",
+        },
+        diagnostic,
+        {
+            namespace = ns_id,
+            user_data = { generated_by = "terminal-diagnostics.nvim" },
+        }
+    )
 end
 
 ---@param buffer integer
-function diagnostics.create_for_buffer(buffer)
-    -- Parse buffer contents and return diagnostics
-    local lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, true)
-    local SequentialOutputProcessor =
-        require("terminal-diagnostics.output_processors.sequential")
-    local processor = SequentialOutputProcessor.new()
+---@param options terminal-diagnostics.DiagnosticsBufferOptions
+function diagnostics.create_for_buffer(buffer, options)
+    if not processor then
+        local SequentialOutputProcessor =
+            require("terminal-diagnostics.output_processors.sequential")
+
+        processor = SequentialOutputProcessor.new()
+    end
 
     processor.process({
         buffer = buffer,
         input = {},
-        output = lines,
+        output = vim.api.nvim_buf_get_lines(buffer, 0, -1, true),
         has_ansi = false,
-    }, {
-        terminal_diagnostics = true,
-    })
+    }, options)
 end
 
 -- { {
@@ -60,14 +73,22 @@ function diagnostics.from_parse_results(parse_results)
     local _diagnostics = {}
 
     for _, parse_result in ipairs(parse_results) do
-        local diagnostic = diagnostics.create("terminal-diagnostics.nvim", {
-            bufnr = 0, -- TODO: Should be part of parse result
-            lnum = parse_result.lnum,
-            col = parse_result.col,
+        local buffer = 0
+
+        -- TODO: How to handle multiple valid paths?
+        if parse_result.paths[1] then
+            buffer = vim.uri_to_bufnr(vim.uri_from_fname(parse_result.paths[1]))
+        end
+
+        local diagnostic = diagnostics.create({
+            bufnr = buffer,
+            lnum = parse_result.lnum - 1,
+            col = parse_result.col - 1,
             severity = parse_result.severity,
             message = parse_result.message,
             source = parse_result.source,
             code = parse_result.code,
+            valid = buffer ~= nil,
         })
 
         table.insert(_diagnostics, diagnostic)
@@ -89,14 +110,18 @@ function diagnostics.terminal_from_parse_results(parse_results)
     }
 
     for _, parse_result in ipairs(parse_results) do
-        local diagnostic = diagnostics.create("terminal-diagnostics.nvim", {
+        local diagnostic = diagnostics.create({
             -- bufnr = 0, -- TODO: Should be part of parse result
             lnum = parse_result.start.lnum - 1,
             end_lnum = parse_result.end_.lnum - 1,
             col = parse_result.start.col,
             end_col = parse_result.end_.col,
             severity = parse_result.severity,
-            message = ("%s %s %s"):format(parse_result.source, parse_result.kind, temp[parse_result.severity]),
+            message = ("%s %s %s"):format(
+                parse_result.source,
+                parse_result.kind,
+                temp[parse_result.severity]
+            ),
             source = parse_result.source,
             code = parse_result.code,
         })
@@ -114,18 +139,38 @@ function diagnostics.set(buffer, _diagnostics, options)
     vim.diagnostic.set(ns_id, buffer, _diagnostics, options)
 end
 
+---@param _diagnostics vim.Diagnostic[]
+---@param options terminal-diagnostics.QuickfixOptions?
 function diagnostics.setqflist(_diagnostics, options)
+    local _options = options or {}
+
+    -- TODO: What to do about multiple paths here?
     local qf_items = vim.diagnostic.toqflist(_diagnostics)
 
+    -- for idx = 1, #qf_items do
+    --     local qf_item = qf_items[idx]
+    --     local diagnostic = _diagnostics[idx]
+    --
+    --     -- Abuse the module name of the quickfix item to signal the
+    --     -- source of the diagnostic
+    --     qf_item.module = diagnostic.source
+    -- end
+
+    -- vim.print(vim.inspect(qf_items))
+
     -- TODO: Use context to replace existing quickfix?
-    vim.fn.setqflist({}, "a", {
+    vim.fn.setqflist({}, " ", {
         items = qf_items,
-        title = options.title or "terminal-diagnostics.nvim",
+        title = _options.title or "terminal-diagnostics.nvim",
         context = { is_terminal_diagnostics = true },
     })
 
-    if options.open then
+    if _options.open then
         vim.cmd.copen()
+
+        if _options.focus == false then
+            vim.cmd.wincmd("p")
+        end
     end
 end
 
@@ -172,6 +217,8 @@ function diagnostics.setup(options)
             },
             linehl = false,
         },
+        -- TODO: vim.diagnostic.open_float returns the float buffer and window
+        -- id so perhaps use that to load the target buffer
         float = {
             header = { "terminal-diagnostics.nvim", "Title" },
             source = false,
@@ -183,7 +230,7 @@ function diagnostics.setup(options)
             --     vim.print(vim.api.nvim_get_current_buf())
             --     return ""
             -- end
-        }
+        },
     }, options or {})
 
     vim.diagnostic.config(diagnostic_config, diagnostics.namespace_id())
