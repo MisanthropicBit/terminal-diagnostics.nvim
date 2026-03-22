@@ -2,9 +2,9 @@ local cursor = {}
 
 local builtins = require("terminal-diagnostics.builtins")
 
----@param location { [1]: terminal-diagnostics.Match, [2]: terminal-diagnostics.MatchResult }?
+---@param location terminal-diagnostics.ApiResult?
 ---@return boolean
-local function last_jump_location_is_valid(location)
+local function last_jump_result_is_valid(location)
     if not location or not location[1] then
         return false
     end
@@ -24,33 +24,32 @@ end
 ---@parm options table
 ---@return terminal-diagnostics.ApiResult?
 function cursor.find_at_cursor(buffer, options)
-    local match, data
-    local last_jump_location = require("terminal-diagnostics.api.jump").get_last_jump_position()
-    local valid = last_jump_location_is_valid(last_jump_location)
+    local result
+    local last_jump_result = require("terminal-diagnostics.api.jump").get_last_jump_match()
+    local valid = last_jump_result_is_valid(last_jump_result)
 
     if valid then
-        ---@cast last_jump_location -nil
-        match = last_jump_location.match
-        data = last_jump_location.data
+        ---@cast last_jump_result -nil
+        result = last_jump_result
     else
-        last_jump_location = nil
         local command_specs = builtins.get()
 
         for _, command_spec in ipairs(command_specs) do
             local matcher = command_spec:matcher()
-            match, data = matcher.match_at_cursor({ buffer = buffer })
+            spec, match = matcher.match_at_cursor({ buffer = buffer, extract = false })
 
-            if match then
+            if spec and match then
+                result = { spec = spec, match = match }
                 break
             end
         end
     end
 
-    if not match then
+    if not result then
         return
     end
 
-    return { match = match, data = data }
+    return result
 end
 
 return cursor

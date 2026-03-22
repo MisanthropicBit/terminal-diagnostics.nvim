@@ -4,7 +4,8 @@ local utils = require("terminal-diagnostics.utils")
 local matchers = require("terminal-diagnostics.matchers")
 
 -- TODO: Support multiple error formats for generators
--- TODO: Pass multiple error messages to generators to support e.g. clang/gcc with both compile and linker errors
+-- TODO: Pass multiple error messages to generators to support e.g. clang/gcc
+--       with both compile and linker errors
 -- TODO: Match/parse any additional error context for visual selection and for creating diagnostics
 -- TODO: Use "end_patterns" for delimiting additional error contexts
 
@@ -48,13 +49,13 @@ function matcher_generators.generate_simple_matcher(options)
                     if match then
                         last_match_pos = nil
 
-                        return match, matchers.extract_from_match(spec, match)
+                        return spec, match
                     end
                 else
                     match = utils.patterns.find(_options.buffer, spec, count)
 
                     if match then
-                        return match, matchers.extract_from_match(spec, match)
+                        return spec, match
                     end
                 end
             end
@@ -85,7 +86,7 @@ function matcher_generators.generate_simple_matcher(options)
                 match = utils.patterns.find_at_cursor(_options.buffer, spec)
 
                 if match then
-                   return match, matchers.extract_from_match(spec, match)
+                    return spec, match
                 end
             end
         end
@@ -101,6 +102,9 @@ function matcher_generators.generate_header_matcher(options)
 
     ---@type terminal-diagnostics.Matcher
     local matcher = {
+        specs = function()
+            return options.specs
+        end,
         match = function(_options)
             local buffer = _options.buffer
             local count = _options.count or 1
@@ -178,7 +182,7 @@ function matcher_generators.generate_header_matcher(options)
                 local match = utils.patterns.find_at_cursor(_options.buffer, spec.error_spec)
 
                 if match then
-                    return match, matchers.extract_from_match(spec.error_spec, match)
+                    return match, _options.extract and matchers.extract_from_match(spec.error_spec, match) or nil
                 end
             end
         end

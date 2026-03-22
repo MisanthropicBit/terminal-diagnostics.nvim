@@ -2,6 +2,7 @@ local open = {}
 
 local notify = require("terminal-diagnostics.notify")
 local ui = require("terminal-diagnostics.ui")
+local matchers = require("terminal-diagnostics.matchers")
 
 ---@enum terminal-diagnostics.OpenType
 local OpenType = {
@@ -17,7 +18,7 @@ local OpenType = {
 ---@field type terminal-diagnostics.OpenType
 
 ---@param type terminal-diagnostics.OpenType
----@param result terminal-diagnostics.ApiResult
+---@param result terminal-diagnostics.MatchResult
 ---@param path string
 local function open_match(type, result, path)
     if vim.fn.filereadable(path) == 0 then
@@ -49,7 +50,7 @@ local function open_match(type, result, path)
             post_open_hook = function()
                 vim.api.nvim_win_set_cursor(
                     0,
-                    { result.data.lnum, result.data.col - 1 }
+                    { result.lnum, result.col - 1 }
                 )
             end,
         })
@@ -58,7 +59,7 @@ local function open_match(type, result, path)
     end
 
     if type ~= OpenType.Preview then
-        vim.api.nvim_win_set_cursor(0, { result.data.lnum, result.data.col - 1 })
+        vim.api.nvim_win_set_cursor(0, { result.lnum, result.col - 1 })
     end
 end
 
@@ -70,21 +71,25 @@ function open.open(options)
     if not result then
         notify.error("Found no matches under cursor")
         return
-    elseif not result.data and #result.data.paths == 0 then
+    end
+
+    local data = matchers.extract_from_match(result.spec, result.match)
+
+    if not data or #data.paths == 0 then
         notify.error("Match did not contain a path to open")
         return
     end
 
-    if #result.data.paths == 1 then
-        open_match(options.type, result, result.data.paths[1])
+    if #data.paths == 1 then
+        open_match(options.type, data, data.paths[1])
         return
     end
 
-    vim.ui.select(result.data.paths, {
-        prompt = ("Found %d paths, please select one > "):format(#result.data.paths),
+    vim.ui.select(data.paths, {
+        prompt = ("Found %d paths, please select one > "):format(#data.paths),
     }, function(item)
         if item then
-            open_match(options.type, result, item)
+            open_match(options.type, data, item)
         end
     end)
 end

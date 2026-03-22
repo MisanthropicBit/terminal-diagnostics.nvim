@@ -31,17 +31,19 @@ local matchers = {}
 ---@field message  string?
 
 ---@class terminal-diagnostics.MatchAtCursorOptions
----@field buffer integer
+---@field buffer  integer
+---@field extract boolean?
 
 ---@class terminal-diagnostics.MatchOptions: terminal-diagnostics.MatchAtCursorOptions
----@field lnum  integer
----@field col   integer
----@field count integer?
+---@field lnum    integer
+---@field col     integer
+---@field count   integer?
+---@field extract boolean?
 
 ---@class terminal-diagnostics.Matcher
----@field match fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.Match?, terminal-diagnostics.MatchResult?
+---@field match fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
 ---@field match_start fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.Match?
----@field match_at_cursor fun(options: terminal-diagnostics.MatchAtCursorOptions): terminal-diagnostics.Match?, terminal-diagnostics.MatchResult?
+---@field match_at_cursor fun(options: terminal-diagnostics.MatchAtCursorOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
 ---@field specs fun(): terminal-diagnostics.MatchSpec[]
 
 local supported_matchers = {}
@@ -91,6 +93,8 @@ local function resolve_path(path, path_kind)
     end
 
     if not path_kind or path_kind == "relative" then
+        -- TODO: Slow for large repos, can we perhaps cache results or
+        -- check in relation to the project root?
         local paths = vim.fs.find(path, {
             limit = math.huge,
             upward = false,

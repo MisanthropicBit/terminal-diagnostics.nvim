@@ -4,10 +4,10 @@ local builtins = require("terminal-diagnostics.builtins")
 local notify = require("terminal-diagnostics.notify")
 local utils = require("terminal-diagnostics.utils")
 
-local ns = vim.api.nvim_create_namespace("terminal-diagnostics.extmarks")
-local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
-    clear = true,
-})
+-- local ns = vim.api.nvim_create_namespace("terminal-diagnostics.extmarks")
+-- local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
+--     clear = true,
+-- })
 
 ---@class terminal-diagnostics.JumpOptions
 ---@field wrap  boolean?
@@ -19,8 +19,8 @@ local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
 ---@field matcher  terminal-diagnostics.Matcher?
 
 ---@class terminal-diagnostics.ApiResult
+---@field spec  terminal-diagnostics.MatchSpec
 ---@field match terminal-diagnostics.Match
----@field data  terminal-diagnostics.MatchResult
 
 ---@class terminal-diagnostics.LastJumpLocation
 ---@field match terminal-diagnostics.Match
@@ -28,7 +28,7 @@ local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
 
 --- Save the last location where we jumped to for quickly opening a location
 ---@type terminal-diagnostics.ApiResult?
-local last_jump_location
+local last_jump_match
 
 ---@param command_specs terminal-diagnostics.CommandSpec[]
 ---@param match_options { buffer: integer, lnum: integer, col: integer, count: integer }
@@ -60,6 +60,7 @@ local function get_closest_match(command_specs, match_options)
 end
 
 ---@param options terminal-diagnostics.JumpOptions?
+---@return terminal-diagnostics.ApiResult?
 function jump.jump(options)
     local _options = options or { count = 1, wrap = false }
     local count = _options.count or 1
@@ -76,6 +77,7 @@ function jump.jump(options)
         lnum = lnum,
         col = col,
         count = count,
+        extract = false,
     }
     ---@type terminal-diagnostics.ClosestMatch
     local closest_match
@@ -118,9 +120,11 @@ function jump.jump(options)
         return
     end
 
-    local match, data = closest_match.matcher.match(match_options)
+    local spec, match = closest_match.matcher.match(match_options)
 
-    last_jump_location = { match = match, data = data }
+    if spec and match then
+        last_jump_match = { spec = spec, match = match }
+    end
 
     -- if config.jump.posthook then
     --     config.jump.posthook({
@@ -132,12 +136,12 @@ function jump.jump(options)
     --     })
     -- end
 
-    return { match = match, data = data }
+    return { spec = spec, match = match }
 end
 
----@return { [1]: terminal-diagnostics.Match, [2]: terminal-diagnostics.MatchResult }?
-function jump.get_last_jump_position()
-    return last_jump_location
+---@return terminal-diagnostics.ApiResult?
+function jump.get_last_jump_match()
+    return last_jump_match
 end
 
 return jump
