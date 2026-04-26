@@ -58,7 +58,7 @@ local function open_match(type, result, path)
         assert(false, ("Invalid open type '%s'"):format(type))
     end
 
-    if type ~= OpenType.Preview then
+    if type ~= OpenType.Preview and result.lnum and result.col then
         vim.api.nvim_win_set_cursor(0, { result.lnum, result.col - 1 })
     end
 end
@@ -73,7 +73,7 @@ function open.open(options)
         return
     end
 
-    local data = matchers.extract_from_match(result.spec, result.match)
+    local data = result.command_spec:matcher():extract_values(result.results)
 
     if not data or #data.paths == 0 then
         notify.error("Match did not contain a path to open")

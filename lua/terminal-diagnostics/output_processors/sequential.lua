@@ -72,10 +72,20 @@ function SequentialOutputProcessor.process(event, options)
 
     -- 2. Parse output using all command specs
     local parse_results = {}
+    local start_lnum = event.output_pos and event.output_pos.start.lnum or 0
+    local parse_options = {
+        offset = start_lnum,
+        context = options,
+    }
+
+    log.timing.start("sequential.parse_results")
 
     for _, command_spec in ipairs(command_specs) do
         local parser = command_spec:parser()
-        local _parse_results = parser.parse(output, { offset = event.output_pos.start.lnum })
+
+        log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
+        local _parse_results = parser.parse(output, parse_options)
+        log.timing.stop()
 
         if #_parse_results == 0 then
             log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
@@ -84,6 +94,8 @@ function SequentialOutputProcessor.process(event, options)
         end
     end
 
+    log.timing.stop("sequential.parse_results")
+
     if #parse_results == 0 then
         notify.error("Unexpectedly found no results when parsing output")
         return
@@ -91,7 +103,9 @@ function SequentialOutputProcessor.process(event, options)
 
     -- 3. Create terminal diagnostics from parse results
     if _options.terminal_diagnostics then
+        log.timing.start("sequential.terminal_diagnostics")
         local terminal_diagnostics = diagnostics.terminal_from_parse_results(parse_results)
+        log.timing.stop()
 
         diagnostics.set(event.buffer, terminal_diagnostics, {})
     end

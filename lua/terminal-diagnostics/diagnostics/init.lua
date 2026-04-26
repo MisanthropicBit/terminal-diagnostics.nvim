@@ -117,8 +117,7 @@ function diagnostics.terminal_from_parse_results(parse_results)
             col = parse_result.start.col,
             end_col = parse_result.end_.col,
             severity = parse_result.severity,
-            message = ("%s %s %s"):format(
-                parse_result.source,
+            message = ("%s %s"):format(
                 parse_result.kind,
                 temp[parse_result.severity]
             ),

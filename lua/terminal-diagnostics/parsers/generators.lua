@@ -8,9 +8,9 @@ local utils = require("terminal-diagnostics.utils")
 --- Generate a parser from a matcher
 ---@param command_spec terminal-diagnostics.CommandSpec
 ---@param options terminal-diagnostics.parser.GeneratorOptions
----@return terminal-diagnostics.parser.Parser
+---@return terminal-diagnostics.parser.SimpleMatcherParser
 function generators.from_simple_matcher(command_spec, options)
-    ---@type terminal-diagnostics.parser.Parser
+    ---@type terminal-diagnostics.parser.SimpleMatcherParser
     local parser = {
         parse = function(lines, parse_options)
             ---@type terminal-diagnostics.parser.ParseResult[]
@@ -18,6 +18,17 @@ function generators.from_simple_matcher(command_spec, options)
             local start_marker
             local specs = command_spec:matcher().specs()
             local offset = parse_options and parse_options.offset or 0
+            local match_extract = false
+
+            if parse_options.context then
+                -- TODO: Should this be handled here or in the processors?
+
+                -- Only extract and resolve matches (which may take some time)
+                -- if we are adding the results to some kind of list
+                if parse_options.context.locationlist or parse_options.context.quickfix or parse_options.context.trouble then
+                    match_extract = true
+                end
+            end
 
             for lnum, line in ipairs(lines) do
                 for _, spec in ipairs(specs) do
@@ -38,14 +49,19 @@ function generators.from_simple_matcher(command_spec, options)
                             results[#results].context = vim.list_slice(lines, start_marker, lnum - 1)
                         end
 
-                        local parse_result = matchers.extract_from_match(spec, match)
+                        local parse_result = {
+                            source = command_spec:name(),
+                            kind = command_spec:kind(),
+                            start = { lnum = lnum + offset, col = match.from.col },
+                            end_ = { lnum = lnum + offset, col = match.to.col },
+                        }
+
+                        if match_extract then
+                            parse_result.match = match
+                            parse_result.values = matchers.extract_from_match(spec, match)
+                        end
+
                         ---@cast parse_result terminal-diagnostics.parser.ParseResult
-
-                        parse_result.source = command_spec:name()
-                        parse_result.kind = command_spec:kind()
-                        parse_result.start = { lnum = lnum + offset, col = match.from.col }
-                        parse_result.end_ = { lnum = lnum + offset, col = match.to.col }
-
                         table.insert(results, parse_result)
 
                         -- Start the match for intermediary error output after the actual error line

@@ -1,5 +1,5 @@
 local CommandSpec = require("terminal-diagnostics.command_spec")
-local generators = require("terminal-diagnostics.matchers.generators")
+local SimpleMatcher = require("terminal-diagnostics.matchers.simple_matcher")
 
 -- require("terminal-diagnostics.utils").patterns.find(361, { pattern = [=[\v^([^[:space:]].*)[\(:](\d+)[,:](\d+)%(\):\s+|\s+-\s+)(error|warning|info)\s+TS(\d+)\s*:\s*(.*)$]=], path_kind = "relative", path = 1, lnum = 2, col = 3, severity = 4, code = 5, message = 6 }, 1)
 
@@ -15,6 +15,6 @@ local match_spec = {
     message = 6,
 }
 
-local matcher = generators.generate_simple_matcher({ specs = { match_spec } })
+local matcher = SimpleMatcher.new({ specs = { match_spec } })
 
 return CommandSpec.new("tsc", CommandSpec.CommandKind.Build, matcher)

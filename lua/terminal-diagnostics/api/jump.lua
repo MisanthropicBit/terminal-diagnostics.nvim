@@ -13,14 +13,14 @@ local utils = require("terminal-diagnostics.utils")
 ---@field wrap  boolean?
 ---@field count integer?
 
----@class terminal-diagnostics.ClosestMatch
----@field distance integer
----@field match    terminal-diagnostics.Match?
----@field matcher  terminal-diagnostics.Matcher?
+---@class terminal-diagnostics.ClosestCommandSpec
+---@field distance     integer
+---@field match        terminal-diagnostics.Match?
+---@field command_spec terminal-diagnostics.CommandSpec?
 
----@class terminal-diagnostics.ApiResult
----@field spec  terminal-diagnostics.MatchSpec
----@field match terminal-diagnostics.Match
+---@class (exact) terminal-diagnostics.ApiResult
+---@field command_spec terminal-diagnostics.CommandSpec
+---@field results      terminal-diagnostics.MatchResult2[]
 
 ---@class terminal-diagnostics.LastJumpLocation
 ---@field match terminal-diagnostics.Match
@@ -28,35 +28,36 @@ local utils = require("terminal-diagnostics.utils")
 
 --- Save the last location where we jumped to for quickly opening a location
 ---@type terminal-diagnostics.ApiResult?
-local last_jump_match
+local last_jump_result
 
 ---@param command_specs terminal-diagnostics.CommandSpec[]
 ---@param match_options { buffer: integer, lnum: integer, col: integer, count: integer }
----@return terminal-diagnostics.ClosestMatch
-local function get_closest_match(command_specs, match_options)
-    ---@type terminal-diagnostics.ClosestMatch
-    local closest_match = {
+---@return terminal-diagnostics.ClosestCommandSpec
+local function get_closest_command_spec(command_specs, match_options)
+    ---@type terminal-diagnostics.ClosestCommandSpec
+    local closest_command_spec = {
         distance = math.huge,
         match = nil,
-        matcher = nil,
+        command_spec = nil,
     }
 
     for _, command_spec in ipairs(command_specs) do
         local matcher = command_spec:matcher()
-        local match = matcher.match_start(match_options)
+        vim.print(command_spec:name())
+        local match = matcher:find_match_start(match_options)
 
         if match then
             local distance = math.abs(match.from.lnum - match_options.lnum)
 
-            if distance ~= 0 and distance < closest_match.distance then
-                closest_match.distance = distance
-                closest_match.match = match
-                closest_match.matcher = matcher
+            if distance ~= 0 and distance < closest_command_spec.distance then
+                closest_command_spec.distance = distance
+                closest_command_spec.match = match
+                closest_command_spec.command_spec = command_spec
             end
         end
     end
 
-    return closest_match
+    return closest_command_spec
 end
 
 ---@param options terminal-diagnostics.JumpOptions?
@@ -70,7 +71,7 @@ function jump.jump(options)
     end
 
     local buffer = vim.api.nvim_get_current_buf()
-    local lnum, col = unpack(utils.get_cursor())
+    local lnum, col = unpack(utils.cursor.get())
     local command_specs = builtins.get()
     local match_options = {
         buffer = buffer,
@@ -79,14 +80,14 @@ function jump.jump(options)
         count = count,
         extract = false,
     }
-    ---@type terminal-diagnostics.ClosestMatch
-    local closest_match
+    ---@type terminal-diagnostics.ClosestCommandSpec
+    local closest
     local idx = 1
 
     while idx <= math.abs(count) do
-        closest_match = get_closest_match(command_specs, match_options)
+        closest = get_closest_command_spec(command_specs, match_options)
 
-        if not closest_match.matcher then
+        if not closest.command_spec then
             if not _options.wrap then
                 break
             end
@@ -100,11 +101,11 @@ function jump.jump(options)
             end
         else
             if idx < math.abs(count) then
-                match_options.lnum = closest_match.match.to.lnum
-                match_options.col = closest_match.match.to.col
+                match_options.lnum = closest.match.to.lnum
+                match_options.col = closest.match.to.col
             else
-                match_options.lnum = closest_match.match.from.lnum
-                match_options.col = closest_match.match.from.col - 1
+                match_options.lnum = closest.match.from.lnum
+                match_options.col = closest.match.from.col - 1
             end
 
             idx = idx + 1
@@ -113,18 +114,37 @@ function jump.jump(options)
         vim.api.nvim_win_set_cursor(0, { match_options.lnum, match_options.col })
     end
 
-    if not closest_match.matcher then
+    if not closest.command_spec then
         -- Reset cursor to original position
         vim.api.nvim_win_set_cursor(0, { lnum, col })
-        notify.error("No matches found")
+
+        notify.error(
+            ("No matches found %s cursor"):format(count > 0 and "below" or "above")
+        )
+
         return
     end
 
-    local spec, match = closest_match.matcher.match(match_options)
+    -- Get the full match
+    local results = closest.command_spec:matcher():match(match_options)
 
-    if spec and match then
-        last_jump_match = { spec = spec, match = match }
+    if #results > 0 then
+        last_jump_result = {
+            command_spec = closest.command_spec,
+            results = results,
+        }
     end
+
+    -- vim.api.nvim_exec_autocmds("User", {
+    --     pattern = "TerminalDiagnosticsPostJump",
+    --     modeline = false,
+    --     data = {
+    --         command_spec = closest.command_spec,
+    --         buffer = buffer,
+    --         ns = ns,
+    --         augroup = augroup,
+    --     },
+    -- })
 
     -- if config.jump.posthook then
     --     config.jump.posthook({
@@ -136,12 +156,15 @@ function jump.jump(options)
     --     })
     -- end
 
-    return { spec = spec, match = match }
+    return {
+        command_spec = closest.command_spec,
+        results = results,
+    }
 end
 
 ---@return terminal-diagnostics.ApiResult?
-function jump.get_last_jump_match()
-    return last_jump_match
+function jump.get_last_jump_result()
+    return last_jump_result
 end
 
 return jump

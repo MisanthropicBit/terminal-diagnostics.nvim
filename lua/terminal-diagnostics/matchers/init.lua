@@ -10,6 +10,7 @@ local matchers = {}
 ---@field resolve fun(severity: string): vim.diagnostic.Severity
 
 -- TODO: Add support for end_lnum and end_col
+
 --- A spec for how to match an error and what information capture groups contain
 ---@class (exact) terminal-diagnostics.MatchSpec
 ---@field pattern   string
@@ -21,6 +22,15 @@ local matchers = {}
 ---@field code      integer?
 ---@field message   integer?
 
+--- A match resulting from matching a pattern with a match spec. Contains no
+--- contextual data
+---@class terminal-diagnostics.Match
+---@field text       string
+---@field submatches string[]
+---@field from       terminal-diagnostics.Position
+---@field to         terminal-diagnostics.Position
+
+--- The contextual data extracted from a match using a match spec
 ---@class (exact) terminal-diagnostics.MatchResult
 ---@field name     string?
 ---@field paths    string[]
@@ -29,6 +39,10 @@ local matchers = {}
 ---@field severity string?
 ---@field code     string?
 ---@field message  string?
+
+---@class (exact) terminal-diagnostics.MatchResult2
+---@field spec terminal-diagnostics.MatchSpec
+---@field match terminal-diagnostics.Match
 
 ---@class terminal-diagnostics.MatchAtCursorOptions
 ---@field buffer  integer
@@ -40,11 +54,11 @@ local matchers = {}
 ---@field count   integer?
 ---@field extract boolean?
 
----@class terminal-diagnostics.Matcher
----@field match fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
----@field match_start fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.Match?
----@field match_at_cursor fun(options: terminal-diagnostics.MatchAtCursorOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
----@field specs fun(): terminal-diagnostics.MatchSpec[]
+----@class terminal-diagnostics.Matcher
+----@field match fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
+----@field match_start fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.Match?
+----@field match_at_cursor fun(options: terminal-diagnostics.MatchAtCursorOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
+----@field specs fun(): terminal-diagnostics.MatchSpec[]
 
 local supported_matchers = {}
 
@@ -137,7 +151,6 @@ end
 function matchers.extract_from_match(match_spec, match)
     local submatches = match.submatches
 
-    -- TODO: Account for cases where only a path is known but no position
     -- TODO: Allow all keys to support a function for full control
     return {
         paths = resolve_path(submatches[match_spec.path], match_spec.path_kind),
@@ -199,11 +212,15 @@ function matchers.validator(value)
         return false
     end
 
-    if type(value.match_start) ~= "function" then
+    if type(value.find_match_start) ~= "function" then
         return false
     end
 
     if type(value.match_at_cursor) ~= "function" then
+        return false
+    end
+
+    if type(value.extract_values) ~= "function" then
         return false
     end
 

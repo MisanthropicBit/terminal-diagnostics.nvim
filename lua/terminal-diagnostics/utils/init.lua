@@ -1,19 +1,10 @@
-local function keep_cursor(func)
-    local cursor = vim.api.nvim_win_get_cursor(0)
-
-    func()
-
-    vim.api.nvim_win_set_cursor(0, cursor)
-end
-
----@return { [1]: integer, [2]: integer }
-local function get_cursor()
-    return vim.api.nvim_win_get_cursor(0)
-end
+local lazy_require = require("terminal-diagnostics.utils.lazy_require")
 
 return {
-    patterns = require("terminal-diagnostics.utils.patterns"),
-    keep_cursor = keep_cursor,
-    get_cursor = get_cursor,
-    url = require("terminal-diagnostics.utils.url"),
+    patterns = lazy_require("terminal-diagnostics.utils.patterns"),
+    cursor = lazy_require("terminal-diagnostics.utils.cursor"),
+    url = lazy_require("terminal-diagnostics.utils.url"),
+    timing = lazy_require("terminal-diagnostics.utils.timing"),
+    range = lazy_require("terminal-diagnostics.utils.range"),
+    lazy_require = lazy_require,
 }

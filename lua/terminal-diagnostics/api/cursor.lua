@@ -24,11 +24,10 @@ end
 ---@parm options table
 ---@return terminal-diagnostics.ApiResult?
 function cursor.find_at_cursor(buffer, options)
-    local result
-    local last_jump_result = require("terminal-diagnostics.api.jump").get_last_jump_match()
-    local valid = last_jump_result_is_valid(last_jump_result)
+    local result ---@type terminal-diagnostics.ApiResult
+    local last_jump_result = require("terminal-diagnostics.api.jump").get_last_jump_result()
 
-    if valid then
+    if last_jump_result_is_valid(last_jump_result) then
         ---@cast last_jump_result -nil
         result = last_jump_result
     else
@@ -36,17 +35,17 @@ function cursor.find_at_cursor(buffer, options)
 
         for _, command_spec in ipairs(command_specs) do
             local matcher = command_spec:matcher()
-            spec, match = matcher.match_at_cursor({ buffer = buffer, extract = false })
+            local results = matcher:match_at_cursor({ buffer = buffer })
 
-            if spec and match then
-                result = { spec = spec, match = match }
+            if #results > 0 then
+                result = {
+                    command_spec = command_spec,
+                    results = results,
+                }
+
                 break
             end
         end
-    end
-
-    if not result then
-        return
     end
 
     return result

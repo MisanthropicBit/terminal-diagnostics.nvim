@@ -9,12 +9,6 @@ local matchers = require("terminal-diagnostics.matchers")
 -- TODO: Match/parse any additional error context for visual selection and for creating diagnostics
 -- TODO: Use "end_patterns" for delimiting additional error contexts
 
----@class (exact) terminal-diagnostics.SimpleMatcherOptions
----@field specs terminal-diagnostics.MatchSpec[]
-
----@class terminal-diagnostics.HeaderMatcherOptions
----@field specs { header_spec: terminal-diagnostics.MatchSpec, error_spec: terminal-diagnostics.MatchSpec }[]
-
 ---@param spec terminal-diagnostics.MatchSpec
 ---@return boolean
 local function spec_has_info(spec)

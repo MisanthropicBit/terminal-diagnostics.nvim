@@ -2,13 +2,16 @@
 ---@field private _name     string
 ---@field private _kind     terminal-diagnostics.CommandKind
 ---@field private _matcher terminal-diagnostics.Matcher
----@field private _parser  terminal-diagnostics.parser.Parser?
+---@field private _parser  terminal-diagnostics.parser.SimpleMatcherParser?
 local CommandSpec = {}
+
+-- TODO: Rename kind to tags?
+-- TODO: Add parent kind? eslint-compact => eslint?
 
 CommandSpec.__index = CommandSpec
 
 ---@class (exact) terminal-diagnostics.CommandSpecOptions
----@field parser terminal-diagnostics.parser.Parser?
+---@field parser terminal-diagnostics.parser.SimpleMatcherParser?
 
 ---@enum terminal-diagnostics.CommandKind
 CommandSpec.CommandKind = {
@@ -29,7 +32,7 @@ function CommandSpec.new(name, kind, matcher, options)
 
     vim.validate("name", name, "string")
     vim.validate("kind", kind, "string") -- TODO: Add enum validator
-    vim.validate("matcher", matcher, matchers.validator, "a Matcher class instance")
+    -- vim.validate("matcher", matcher, matchers.validator, "a Matcher class instance")
     vim.validate("options.parser", _options.parser, "table", true, "a Parser class instance") -- TODO: Add class validator
 
     local command_spec = setmetatable({
@@ -42,7 +45,9 @@ function CommandSpec.new(name, kind, matcher, options)
     command_spec._parser = _options.parser
 
     if not command_spec._parser then
-        command_spec._parser = require("terminal-diagnostics.parsers.generators").from_simple_matcher(command_spec, {})
+        command_spec._parser = require("terminal-diagnostics.parsers.simple_matcher_parser").new(command_spec)
+
+        -- require("terminal-diagnostics.parsers.generators").from_simple_matcher(command_spec, {})
     end
 
     return command_spec
@@ -63,7 +68,7 @@ function CommandSpec:matcher()
     return self._matcher
 end
 
----@return terminal-diagnostics.parser.Parser
+---@return terminal-diagnostics.parser.SimpleMatcherParser
 function CommandSpec:parser()
     return self._parser
 end

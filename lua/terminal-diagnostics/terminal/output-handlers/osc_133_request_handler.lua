@@ -7,18 +7,18 @@ local utils = require("terminal-diagnostics.utils")
 
 -- TODO: Parse cmdline_url from MARK_COMMAND_START
 
----@class terminal-diagnostics.Position
+---@class terminal-diagnostics.Position Api-indexed position
 ---@field lnum integer
 ---@field col  integer
 
----@class terminal-diagnostics.Region
+---@class terminal-diagnostics.Range Api-indexed range denoted by two positions
 ---@field start terminal-diagnostics.Position
 ---@field end_  terminal-diagnostics.Position
 
 ---@class terminal-diagnostics.TerminalBufferCacheEntry
 ---@field buffer       integer
----@field input_pos    terminal-diagnostics.Region?
----@field output_pos   terminal-diagnostics.Region?
+---@field input_pos    terminal-diagnostics.Range?
+---@field output_pos   terminal-diagnostics.Range?
 ---@field command_line string[]?
 ---@field exit_code    integer?
 
@@ -41,14 +41,13 @@ local has_cmdline_url_extension = false
 ---@param marker string
 ---@return string[]?
 local function parse_command_start_marker(marker)
-    local tail =
-        vim.iter(vim.gsplit(marker, ";", { plain = true })):skip(2):totable()
+    local tail = vim.iter(vim.gsplit(marker, ";", { plain = true })):skip(2)
 
-    if not tail then
+    if not tail:peek() then
         return
     end
 
-    local rest = table.concat(tail, "")
+    local rest = tail:join("")
 
     if vim.startswith(rest, "cmdline_url=") then
         local encoded_command_line = table.concat(
@@ -101,7 +100,7 @@ local terminal_buffer_cache = Cache.new(nil, {
 })
 
 ---@param buffer integer
----@param region terminal-diagnostics.Region
+---@param region terminal-diagnostics.Range
 ---@return string[]
 local function get_buf_text_region(buffer, region)
     if not region.start or not region.end_ then

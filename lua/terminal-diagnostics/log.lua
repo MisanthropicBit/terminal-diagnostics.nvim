@@ -6,7 +6,9 @@
 ---@field info  terminal-diagnostics.LogFunc
 ---@field warn  terminal-diagnostics.LogFunc
 ---@field error terminal-diagnostics.LogFunc
-local log = {}
+local log = { timing = {} }
+
+local timings = {}
 
 log.rotation_strategy = {}
 
@@ -20,9 +22,19 @@ local MAX_SIZE_BYTES = 5e+7 -- 50 MB
 
 ---@alias terminal-diagnostics.LogRotationStrategy fun(logger: terminal-diagnostics.Logger)
 
+---@return string
 local function newline()
-    -- TODO: Port over Path.newline
-    return "\n"
+    if jit then
+        local os = string.lower(jit.os)
+
+        if os == "linux" or os == "osx" or os == "bsd" then
+            return "\n"
+        else
+            return "\r\n"
+        end
+    else
+        return package.config:sub(1, 1)
+    end
 end
 
 --- Rotation strategy where the same log file is cleared and reused
@@ -222,6 +234,30 @@ function log.with_context(name)
     end
 
     return wrapper
+end
+
+---@param data string | table<string, unknown>
+function log.timing.start(data)
+    local _data = type(data) == "string" and { name = data } or data
+    ---@cast _data table<string, unknown>
+
+    timings[_data.name] = {
+        data = _data,
+        start_time = vim.uv.hrtime(),
+    }
+end
+
+---@param name string?
+function log.timing.stop(name)
+    local timing = timings[name]
+
+    if not timing then
+        error(("No timing found with name '%s'"):format(name))
+    end
+
+    local elapsed_ms = vim.uv.hrtime() - timing.start_time
+
+    log.debug("timing", timing, ("elapsed ms: %.2f"):format(elapsed_ms))
 end
 
 for level_name, level in pairs(vim.log.levels) do

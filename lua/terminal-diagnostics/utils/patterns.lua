@@ -1,16 +1,6 @@
 -- TODO: Rename to 'search'?
 local patterns = {}
 
----@class terminal-diagnostics.EditorPosition
----@field lnum integer
----@field col  integer
-
----@class terminal-diagnostics.Match
----@field text       string
----@field submatches string[]
----@field from       terminal-diagnostics.EditorPosition
----@field to         terminal-diagnostics.EditorPosition
-
 ---@alias terminal-diagnostics.SubGroupResult { start_col: integer, end_col: integer }
 
 ---@class terminal-diagnostics.SubgroupParseResult
@@ -31,8 +21,8 @@ end
 
 ---@param buffer       integer
 ---@param spec         terminal-diagnostics.MatchSpec
----@param first_match  terminal-diagnostics.EditorPosition
----@param second_match terminal-diagnostics.EditorPosition
+---@param first_match  terminal-diagnostics.Position
+---@param second_match terminal-diagnostics.Position
 ---@return terminal-diagnostics.Match
 local function create_match(buffer, spec, first_match, second_match)
     local text = { table.concat(vim.api.nvim_buf_get_text(
@@ -110,21 +100,27 @@ function patterns.find(buffer, spec, count)
     return match
 end
 
+---@param buffer integer
+---@param spec terminal-diagnostics.MatchSpec
+---@return terminal-diagnostics.Match?
 function patterns.find_at_cursor(buffer, spec)
     local match
     local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
     col = col + 1
     local first_match = vim.fn.searchpos(spec.pattern, "cnbW")
 
-    -- TODO: Allow overriding second condition for multiline patterns
-    if first_match[1] == 0 or first_match[1] ~= lnum then
-        return
+    if first_match[1] == 0  then
+        if not spec.multiline and first_match[1] ~= lnum then
+            return
+        end
     end
 
     local second_match = vim.fn.searchpos(spec.pattern, "cneW")
 
     if second_match[1] == 0 or second_match[1] ~= lnum then
-        return
+        if not spec.multiline and second_match[1] ~= lnum then
+            return
+        end
     end
 
     if lnum >= first_match[1] and lnum <= second_match[1] then
@@ -138,8 +134,9 @@ end
 
 ---@param line string
 ---@param match_spec terminal-diagnostics.MatchSpec
+---@param lnum integer?
 ---@return terminal-diagnostics.Match?
-function patterns.find_in_line(line, match_spec)
+function patterns.find_in_line(line, match_spec, lnum)
     local pattern = match_spec.pattern
     local match, start_col, end_col = unpack(vim.fn.matchstrpos(line, pattern))
 
@@ -152,8 +149,8 @@ function patterns.find_in_line(line, match_spec)
     return {
         text = match,
         submatches = submatches[1] and submatches[1].submatches or {},
-        from = { lnum = -1, col = start_col },
-        to = { lnum = -1, col = end_col },
+        from = { lnum = lnum or -1, col = start_col },
+        to = { lnum = lnum or -1, col = end_col },
     }
 end
 

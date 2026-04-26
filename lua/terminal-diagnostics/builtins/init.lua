@@ -1,6 +1,12 @@
 local builtins = {}
 
-local builtin_command_specs = { "tsc", "eslint-compact" }
+-- TODO: Make this automatic
+local builtin_command_specs = {
+    "tsc",
+    "eslint-compact",
+    "eslint-stylish",
+    "rustc",
+}
 
 ---@param filter string[]?
 ---@return terminal-diagnostics.CommandSpec[]
@@ -13,7 +19,8 @@ function builtins.get(filter)
         end, names)
     end
 
-    -- Many of the patterns were borrowed and modified from stevearc/overseer.nvim and ej-shafran/compile-mode.nvim
+    -- Many of the patterns were borrowed and modified from
+    -- stevearc/overseer.nvim and ej-shafran/compile-mode.nvim
     return vim.tbl_map(function(name)
         return require("terminal-diagnostics.builtins." .. name)
     end, names)
