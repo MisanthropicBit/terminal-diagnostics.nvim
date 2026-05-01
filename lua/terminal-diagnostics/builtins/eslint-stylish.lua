@@ -9,13 +9,14 @@ local header_spec = {
 
 ---@type terminal-diagnostics.MatchSpec
 local error_spec = {
-    pattern = [[\v^(.+):\sline\s(\d+),\scol\s(\d+),\s(Error|Warning|Info)\s-\s(.+)(\s\((.+)\))?$]],
-    path_kind = "relative",
-    lnum = 2,
-    col = 3,
-    severity = 4,
-    message = 5,
-    code = 6,
+    pattern = [[\v^\s+(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]],
+    -- pattern = [[\v^(.+):\sline\s(\d+),\scol\s(\d+),\s(Error|Warning|Info)\s-\s(.+)(\s\((.+)\))?$]],
+    path_kind = "absolute",
+    lnum = 1,
+    col = 2,
+    severity = 3,
+    message = 4,
+    code = 5,
 }
 
 local matcher = HeaderMatcher.new({
