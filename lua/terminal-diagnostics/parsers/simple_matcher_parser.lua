@@ -48,7 +48,7 @@ end
 function SimpleParser:parse(lines, options)
     local results = {} ---@type terminal-diagnostics.parser.ParseResult[]
     local start_marker ---@type integer?
-    local specs = self.command_spec:matcher().specs()
+    local specs = self.command_spec:matcher():specs()
     local offset = options and options.offset or 0
     local extract_match = false
     local count = 0

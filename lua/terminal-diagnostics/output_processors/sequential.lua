@@ -32,7 +32,7 @@ local function get_command_specs(input, output)
         local builtin_command_specs = builtins.get()
 
         for _, command_spec in ipairs(builtin_command_specs) do
-            for _, match_spec in ipairs(command_spec:matcher().specs()) do
+            for _, match_spec in ipairs(command_spec:matcher():specs()) do
                 local lnum = utils.patterns.find_in_lines(output, match_spec)
 
                 if lnum ~= -1 then
@@ -84,7 +84,7 @@ function SequentialOutputProcessor.process(event, options)
         local parser = command_spec:parser()
 
         log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
-        local _parse_results = parser.parse(output, parse_options)
+        local _parse_results = parser:parse(output, parse_options)
         log.timing.stop()
 
         if #_parse_results == 0 then
