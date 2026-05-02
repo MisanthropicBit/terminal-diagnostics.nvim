@@ -43,7 +43,6 @@ local function get_closest_command_spec(command_specs, match_options)
 
     for _, command_spec in ipairs(command_specs) do
         local matcher = command_spec:matcher()
-        vim.print(command_spec:name())
         local match = matcher:find_match_start(match_options)
 
         if match then

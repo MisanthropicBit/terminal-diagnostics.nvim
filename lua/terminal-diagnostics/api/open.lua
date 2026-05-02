@@ -2,10 +2,9 @@ local open = {}
 
 local notify = require("terminal-diagnostics.notify")
 local ui = require("terminal-diagnostics.ui")
-local matchers = require("terminal-diagnostics.matchers")
 
 ---@enum terminal-diagnostics.OpenType
-local OpenType = {
+open.OpenType = {
     Split = "split",
     Vertical = "vertical",
     Tab = "tab",
@@ -26,18 +25,18 @@ local function open_match(type, result, path)
         return
     end
 
-    if type == OpenType.Split then
+    if type == open.OpenType.Split then
         vim.cmd.split(path)
-    elseif type == OpenType.Vertical then
+    elseif type == open.OpenType.Vertical then
         vim.cmd("vertical split " .. path)
-    elseif type == OpenType.Tab then
+    elseif type == open.OpenType.Tab then
         vim.cmd.tabnew(path)
-    elseif type == OpenType.Edit then
+    elseif type == open.OpenType.Edit then
         vim.cmd.edit(path)
-    elseif type == OpenType.Preview then
+    elseif type == open.OpenType.Preview then
         -- TODO: Set cursor in preview window
         vim.cmd.pedit(path)
-    elseif type == OpenType.Float then
+    elseif type == open.OpenType.Float then
         ui.float.open_preview({
             target = path,
             width = 0.5,
@@ -58,7 +57,7 @@ local function open_match(type, result, path)
         assert(false, ("Invalid open type '%s'"):format(type))
     end
 
-    if type ~= OpenType.Preview and result.lnum and result.col then
+    if type ~= open.OpenType.Preview and result.lnum and result.col then
         vim.api.nvim_win_set_cursor(0, { result.lnum, result.col - 1 })
     end
 end

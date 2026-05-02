@@ -101,9 +101,10 @@ end
 
 ---@param path string
 ---@param path_kind string?
+---@return string[]?
 local function resolve_path(path, path_kind)
     if not path then
-        return {}
+        return
     end
 
     if not path_kind or path_kind == "relative" then

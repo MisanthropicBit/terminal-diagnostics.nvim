@@ -5,13 +5,13 @@ local HeaderMatcher = require("terminal-diagnostics.matchers.header_matcher")
 local header_spec = {
     pattern = "\\v^(%([a-zA-Z]:)*[./\\\\]+.{-})$",
     path = 1,
+    path_kind = "absolute",
 }
 
 ---@type terminal-diagnostics.MatchSpec
 local error_spec = {
     pattern = [[\v^\s+(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]],
     -- pattern = [[\v^(.+):\sline\s(\d+),\scol\s(\d+),\s(Error|Warning|Info)\s-\s(.+)(\s\((.+)\))?$]],
-    path_kind = "absolute",
     lnum = 1,
     col = 2,
     severity = 3,

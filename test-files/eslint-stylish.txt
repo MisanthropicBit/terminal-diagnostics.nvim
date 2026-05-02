@@ -1,7 +1,6 @@
 
 
-
-./terminal-diagnostics.nvim/test-files/target-files/foo.js
+./test-files/target-files/foo.js
   1:10  error    'addOne' is defined but never used            no-unused-vars
   2:9   error    Use the isNaN function to compare with NaN    use-isnan
   3:16  error    Unexpected space before unary operator '++'   space-unary-ops
