@@ -9,6 +9,7 @@
 local log = { timing = {} }
 
 local timings = {}
+local ordered_timings = {}
 
 log.rotation_strategy = {}
 
@@ -245,6 +246,8 @@ function log.timing.start(data)
         data = _data,
         start_time = vim.uv.hrtime(),
     }
+
+    table.insert(ordered_timings, _data.name)
 end
 
 ---@param name string?
@@ -252,7 +255,11 @@ function log.timing.stop(name)
     local timing = timings[name]
 
     if not timing then
-        error(("No timing found with name '%s'"):format(name))
+        timing = table.remove(ordered_timings)
+
+        if not timing then
+            error(("No timing found with name '%s'"):format(name))
+        end
     end
 
     local elapsed_ms = vim.uv.hrtime() - timing.start_time
