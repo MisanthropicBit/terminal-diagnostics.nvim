@@ -117,7 +117,7 @@ function patterns.find_at_cursor(buffer, spec)
 
     local second_match = vim.fn.searchpos(spec.pattern, "cneW")
 
-    if second_match[1] == 0 or second_match[1] ~= lnum then
+    if second_match[1] == 0 then
         if not spec.multiline and second_match[1] ~= lnum then
             return
         end
