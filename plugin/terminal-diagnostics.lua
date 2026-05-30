@@ -2,9 +2,8 @@ local open_command_complete_args
 
 local function open_command_complete()
     if not open_command_complete_args then
-        -- TODO: Move OpenType to separate file?
         open_command_complete_args =
-            vim.tbl_values(require("terminal-diagnostics.api.open").OpenType)
+            vim.tbl_values(require("terminal-diagnostics.api.open_type").OpenType)
     end
 
     return open_command_complete_args
