@@ -74,7 +74,7 @@ function open.open(options)
 
     local data = result.command_spec:matcher():extract_values(result.results)
 
-    if not data or #data.paths == 0 then
+    if not data or not data.paths or #data.paths == 0 then
         notify.error("Match did not contain a path to open")
         return
     end

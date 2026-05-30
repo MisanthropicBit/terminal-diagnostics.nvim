@@ -21,9 +21,8 @@ local function last_jump_result_is_valid(location)
 end
 
 ---@param buffer integer
----@parm options table
 ---@return terminal-diagnostics.ApiResult?
-function cursor.find_at_cursor(buffer, options)
+function cursor.find_at_cursor(buffer)
     local result ---@type terminal-diagnostics.ApiResult
     local last_jump_result = require("terminal-diagnostics.api.jump").get_last_jump_result()
 

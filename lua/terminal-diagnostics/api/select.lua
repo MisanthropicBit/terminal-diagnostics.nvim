@@ -2,9 +2,20 @@ local select = {}
 
 local utils = require("terminal-diagnostics.utils")
 
+---@enum terminal-diagnostics.SelectField
+select.SelectField = {
+    Path = "path",
+    Lnum = "lnum",
+    Col = "col",
+    Severity = "severity",
+    Code = "code",
+    Message = "message",
+}
+
 ---@class terminal-diagnostics.SelectOptions
 ---@field lookahead boolean? Scan forward and try to find a match
 ---@field outer     boolean? Select the "outer" (instead of inner) error message
+---@field field     terminal-diagnostics.SelectField?
 
 local block_visual_mode = "\22"
 
@@ -65,38 +76,28 @@ end
 
 ---@param cursor_result terminal-diagnostics.ApiResult?
 ---@param options terminal-diagnostics.SelectOptions
----@return terminal-diagnostics.Range?
+---@return terminal-diagnostics.ApiResult?
 local function handle_inner_select(cursor_result, options)
     if cursor_result then
-        return {
-            start = cursor_result.results[1].match.from,
-            end_ = cursor_result.results[1].match.to,
-        }
+        -- TODO: Use the result that overlaps with the cursor
+        return cursor_result
     end
 
     if not options.lookahead then
         return
     end
 
-    local result = require("terminal-diagnostics.api.jump").jump({
+    return require("terminal-diagnostics.api.jump").jump({
         count = 1,
         wrap = false,
     })
-
-    if result then
-        return {
-            start = result.results[1].match.from,
-            end_ = result.results[1].match.to,
-        }
-    end
 end
 
----@param parser terminal-diagnostics.parser.Parser
----@param offset integer
+---@param api_result terminal-diagnostics.ApiResult
 ---@return terminal-diagnostics.parser.ParseResult?
-local function get_single_parse_result_with_context(parser, offset)
-    local parse_results = parser:parse_buffer(0, {
-        offset = offset,
+local function get_single_parse_result_with_context(api_result)
+    local parse_results = api_result.command_spec:parser():parse_buffer(0, {
+        offset = api_result.results[1].match.from.lnum,
         count = 1,
     })
 
@@ -107,26 +108,27 @@ end
 
 ---@param cursor_result terminal-diagnostics.ApiResult?
 ---@param options terminal-diagnostics.SelectOptions
----@return terminal-diagnostics.Range?
+---@return terminal-diagnostics.ApiResult?, terminal-diagnostics.Range?
 local function handle_outer_select(cursor_result, options)
     -- 1. If there is a result on the cursor, parse once
     if cursor_result then
-        -- TODO: Check if parser even supports context
-        local parse_result = get_single_parse_result_with_context(
-            cursor_result.command_spec:parser(),
-            cursor_result.results[1].match.from.lnum
-        )
+        -- If parser does not support context lines just return the result
+        if not cursor_result.command_spec:has_context() then
+            return cursor_result
+        end
+
+        local parse_result = get_single_parse_result_with_context(cursor_result)
 
         if parse_result then
             local context = parse_result.context
             ---@cast context -nil
 
-            return {
+            return cursor_result, {
                 start = cursor_result.results[1].match.from,
                 end_ = context.range.end_,
             }
         else
-            return {
+            return cursor_result, {
                 start = cursor_result.results[1].match.from,
                 end_ = cursor_result.results[1].match.to,
             }
@@ -143,17 +145,18 @@ local function handle_outer_select(cursor_result, options)
     })
 
     if prev then
-        local parse_result = get_single_parse_result_with_context(
-            prev.command_spec:parser(),
-            prev.results[1].match.from.lnum
-        )
+        if not prev.command_spec:has_context() then
+            return
+        end
+
+        local parse_result = get_single_parse_result_with_context(prev)
 
         if parse_result then
             local context = parse_result.context
             ---@cast context -nil
 
             if utils.range.contains(context.range, lnum) then
-                return {
+                return prev, {
                     start = parse_result.range.start,
                     end_ = context.range.end_,
                 }
@@ -176,10 +179,11 @@ local function handle_outer_select(cursor_result, options)
     end
 
     if next then
-        local parse_result = get_single_parse_result_with_context(
-            next.command_spec:parser(),
-            next.results[1].match.from.lnum
-        )
+        if not next.command_spec:has_context() then
+            return next
+        end
+
+        local parse_result = get_single_parse_result_with_context(next)
 
         if parse_result then
             local context = parse_result.context
@@ -197,21 +201,36 @@ end
 
 ---@param options terminal-diagnostics.SelectOptions?
 function select.select(options)
+    -- TODO: Validate arguments for public all api functions
+
     local _options = options or {}
-    local result = require("terminal-diagnostics.api.cursor").find_at_cursor(0, {})
+    local result = require("terminal-diagnostics.api.cursor").find_at_cursor(0)
     local range ---@type terminal-diagnostics.Range?
 
     if _options.outer then
-        range = handle_outer_select(result, _options)
+        result, range = handle_outer_select(result, _options)
     else
-        range = handle_inner_select(result, _options)
+        result = handle_inner_select(result, _options)
     end
 
-    if not range then
+    if not result then
         return
     end
 
-    local from, to = range.start, range.end_
+    local from, to = result.results[1].match.from, result.results[1].match.to
+
+    if _options.outer then
+        ---@cast range -nil
+        from, to = range.start, range.end_
+    end
+
+    -- if _options.field then
+    --     local subgroups = utils.patterns.parse_subgroups(result.results[1].match.text, result.results[1].spec)
+    --     local subgroup = subgroups[_options.field]
+    --
+    --     from = { lnum = from.lnum, col = subgroup.start_col }
+    --     to = { lnum = to.lnum, col = subgroups.end_col}
+    -- end
 
     local mode = vim.api.nvim_get_mode().mode
 
