@@ -6,10 +6,11 @@ local parsers = {}
 
 ---@class (exact) terminal-diagnostics.parser.ParseResult
 ---@field source  string
+---@field buffer  integer?
 ---@field kind    terminal-diagnostics.CommandKind
 ---@field range   terminal-diagnostics.Range
 ---@field context terminal-diagnostics.parser.ParseResultContext? Extra context lines associated with e.g. a compile error
----@field match   terminal-diagnostics.Match? Optional match that the parse result might be based on
+---@field matches terminal-diagnostics.Match[]? Optional matches that the parse result might be based on
 ---@field values  terminal-diagnostics.MatchResult? Optional values as result extraction may be delayed
 
 ---@class terminal-diagnostics.ParseContext : terminal-diagnostics.SequentialOutputProcessorOptions

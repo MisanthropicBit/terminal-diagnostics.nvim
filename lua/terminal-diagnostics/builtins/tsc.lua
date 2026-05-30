@@ -17,4 +17,9 @@ local match_spec = {
 
 local matcher = SimpleMatcher.new({ specs = { match_spec } })
 
-return CommandSpec.new("tsc", CommandSpec.CommandKind.Build, matcher)
+return CommandSpec.new(
+    "tsc",
+    CommandSpec.CommandKind.Build,
+    matcher,
+    { has_context = true }
+)

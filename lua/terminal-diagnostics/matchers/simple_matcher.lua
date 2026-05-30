@@ -85,6 +85,12 @@ function SimpleMatcher:match_at_cursor(options)
     return {}
 end
 
+function SimpleMatcher:resolve_specs()
+    for _, spec in ipairs(self:specs()) do
+        Matcher.resolve_spec(spec)
+    end
+end
+
 function SimpleMatcher:extract_values(results)
     if #results ~= 1 then
         error(

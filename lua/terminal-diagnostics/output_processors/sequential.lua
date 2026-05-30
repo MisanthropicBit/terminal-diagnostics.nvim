@@ -33,11 +33,13 @@ local function get_command_specs(input, output)
 
         for _, command_spec in ipairs(builtin_command_specs) do
             for _, match_spec in ipairs(command_spec:matcher():specs()) do
-                local lnum = utils.patterns.find_in_lines(output, match_spec)
+                if match_spec.subpatterns then
+                    local lnum = utils.patterns.find_in_lines(output, match_spec)
 
-                if lnum ~= -1 then
-                    table.insert(command_specs, command_spec)
-                    break
+                    if lnum ~= -1 then
+                        table.insert(command_specs, command_spec)
+                        break
+                    end
                 end
             end
         end
@@ -78,14 +80,14 @@ function SequentialOutputProcessor.process(event, options)
         context = options,
     }
 
-    log.timing.start("sequential.parse_results")
+    -- log.timing.start("sequential.parse_results")
 
     for _, command_spec in ipairs(command_specs) do
         local parser = command_spec:parser()
 
-        log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
+        -- log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
         local _parse_results = parser:parse(output, parse_options)
-        log.timing.stop()
+        -- log.timing.stop()
 
         if #_parse_results == 0 then
             log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
@@ -94,7 +96,7 @@ function SequentialOutputProcessor.process(event, options)
         end
     end
 
-    log.timing.stop("sequential.parse_results")
+    -- log.timing.stop("sequential.parse_results")
 
     if #parse_results == 0 then
         notify.error("Unexpectedly found no results when parsing output")
@@ -103,9 +105,9 @@ function SequentialOutputProcessor.process(event, options)
 
     -- 3. Create terminal diagnostics from parse results
     if _options.terminal_diagnostics then
-        log.timing.start("sequential.terminal_diagnostics")
+        -- log.timing.start("sequential.terminal_diagnostics")
         local terminal_diagnostics = diagnostics.terminal_from_parse_results(parse_results)
-        log.timing.stop()
+        -- log.timing.stop()
 
         diagnostics.set(event.buffer, terminal_diagnostics, {})
     end

@@ -2,33 +2,6 @@ local Parser = require("terminal-diagnostics.parsers.parser")
 local matchers = require("terminal-diagnostics.matchers")
 local utils = require("terminal-diagnostics.utils")
 
----@param lines string[]
----@param offset integer
----@param start integer
----@param end_ integer
----@return terminal-diagnostics.parser.ParseResultContext?
-local function create_parse_context(lines, offset, start, end_)
-    local context_lines = vim.list_slice(lines, start, end_ - 1)
-
-    if #context_lines == 0 then
-        return nil
-    end
-
-    return {
-        lines = context_lines,
-        range = {
-            start = {
-                lnum = offset + start - 1,
-                col = 1,
-            },
-            end_ = {
-                lnum = offset + end_ - 2,
-                col = 1, -- TODO: Should be end column of lnum
-            },
-        },
-    }
-end
-
 ---@class terminal-diagnostics.parser.SimpleMatcherParser : terminal-diagnostics.parser.Parser
 ---@field private command_spec terminal-diagnostics.CommandSpec
 local SimpleParser = setmetatable({}, Parser)
@@ -54,6 +27,7 @@ function SimpleParser:parse(lines, options)
     local count = 0
     local source = self.command_spec:name()
     local kind = self.command_spec:kind()
+    local has_context = self.command_spec:has_context()
 
     if options.context then
         -- TODO: Should this be handled here or in the processors?
@@ -69,7 +43,9 @@ function SimpleParser:parse(lines, options)
         end
     end
 
-    for idx, line in ipairs(lines) do
+    extract_match = true
+
+    for idx, _ in ipairs(lines) do
         for _, spec in ipairs(specs) do
             -- Skip specs that contain no information
             if not matchers.spec_has_info(spec) then
@@ -77,7 +53,9 @@ function SimpleParser:parse(lines, options)
             end
 
             local lnum = idx + offset - 1
-            local match = utils.patterns.find_in_line(line, spec, lnum)
+            local match = utils.patterns.find_at_line(lines, spec, lnum)
+
+            vim.print(vim.inspect(match))
 
             if not match then
                 goto continue
@@ -88,34 +66,40 @@ function SimpleParser:parse(lines, options)
             -- 2. Additional error output after and between error lines
             -- 3. No additional error output
 
-            if start_marker then
-                results[#results].context = create_parse_context(
-                    lines,
-                    offset,
-                    start_marker,
-                    idx
-                )
+            if has_context then
+                if start_marker then
+                    results[#results].context = Parser.create_parse_context(
+                        lines,
+                        offset,
+                        start_marker,
+                        idx - 1
+                    )
 
-                count = count + 1
+                    count = count + 1
 
-                if options.count and count == options.count then
-                    break
+                    if options.count and count == options.count then
+                        break
+                    end
+                else
+                    count = count + 1
+
+                    if options.count and count == options.count then
+                        break
+                    end
                 end
             end
 
-            ---@type terminal-diagnostics.parser.ParseResult
-            local parse_result = {
+            local parse_result = Parser.create_parse_result({
                 source = source,
+                buffer = options.buffer,
                 kind = kind,
-                range = {
-                    start = { lnum = lnum, col = match.from.col },
-                    end_ = { lnum = lnum, col = match.to.col },
-                },
-                match = match,
-            }
+                matches = { match },
+            })
 
             if extract_match then
-                parse_result.values = matchers.extract_from_match(spec, match)
+                parse_result.values = self._command_spec:matcher():extract_values({
+                    { spec = spec, match = match },
+                })
             end
 
             table.insert(results, parse_result)
@@ -136,19 +120,19 @@ function SimpleParser:parse(lines, options)
     end
 
     -- Parse any remaining lines that are not delimited by an end pattern
-    if start_marker and start_marker < #lines then
+    if has_context and start_marker and start_marker < #lines then
         -- local context_lines = vim.list_slice(lines, start_marker, #lines)
         -- local is_empty = vim.iter(context_lines):all(function(line)
         --     return vim.fn.trim(line) == ""
         -- end)
         --
         -- if not is_empty then
-            results[#results].context = create_parse_context(
-                lines,
-                offset,
-                start_marker,
-                #lines
-            )
+        results[#results].context = Parser.create_parse_context(
+            lines,
+            offset,
+            start_marker,
+            #lines
+        )
         -- end
     end
 

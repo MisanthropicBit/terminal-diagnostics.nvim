@@ -22,6 +22,10 @@ local matchers = {}
 ---@field code      integer?
 ---@field message   integer?
 
+---@class (exact) terminal-diagnostics._ResolvedMatchSpec : terminal-diagnostics.MatchSpec
+---@field multiline   boolean
+---@field subpatterns string[]
+
 --- A match resulting from matching a pattern with a match spec. Contains no
 --- contextual data
 ---@class terminal-diagnostics.Match

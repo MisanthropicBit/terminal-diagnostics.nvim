@@ -10,6 +10,13 @@ local processor
 
 ---@class terminal-diagnostics.DiagnosticsBufferOptions : terminal-diagnostics.SequentialOutputProcessorOptions
 
+local diagnosticToString = {
+    [vim.diagnostic.severity.ERROR] = "error",
+    [vim.diagnostic.severity.WARN] = "warning",
+    [vim.diagnostic.severity.INFO] = "info",
+    [vim.diagnostic.severity.HINT] = "hint",
+}
+
 ---@return integer
 function diagnostics.namespace_id()
     return ns_id
@@ -102,27 +109,27 @@ end
 function diagnostics.terminal_from_parse_results(parse_results)
     local terminal_diagnostics = {}
 
-    local temp = {
-        [vim.diagnostic.severity.ERROR] = "error",
-        [vim.diagnostic.severity.WARN] = "warning",
-        [vim.diagnostic.severity.INFO] = "info",
-        [vim.diagnostic.severity.HINT] = "hint",
-    }
-
     for _, parse_result in ipairs(parse_results) do
+        local severity = parse_result.values.severity or "info"
+        local code = parse_result.values.code
+
+        if code and code == "" then
+            code = nil
+        end
+
         local diagnostic = diagnostics.create({
-            -- bufnr = 0, -- TODO: Should be part of parse result
-            lnum = parse_result.start.lnum - 1,
-            end_lnum = parse_result.end_.lnum - 1,
-            col = parse_result.start.col,
-            end_col = parse_result.end_.col,
-            severity = parse_result.severity,
+            bufnr = parse_result.buffer,
+            lnum = parse_result.range.start.lnum - 1,
+            end_lnum = parse_result.range.end_.lnum - 1,
+            col = parse_result.range.start.col,
+            end_col = parse_result.range.end_.col,
+            severity = severity,
             message = ("%s %s"):format(
                 parse_result.kind,
-                temp[parse_result.severity]
+                severity
             ),
             source = parse_result.source,
-            code = parse_result.code,
+            code = code,
         })
 
         table.insert(terminal_diagnostics, diagnostic)

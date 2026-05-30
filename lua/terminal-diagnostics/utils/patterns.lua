@@ -25,14 +25,19 @@ end
 ---@param second_match terminal-diagnostics.Position
 ---@return terminal-diagnostics.Match
 local function create_match(buffer, spec, first_match, second_match)
-    local text = { table.concat(vim.api.nvim_buf_get_text(
-        buffer,
-        first_match[1] - 1,
-        first_match[2] - 1,
-        second_match[1] - 1,
-        second_match[2],
-        {}
-    ), "\n") }
+    local text = {
+        table.concat(
+            vim.api.nvim_buf_get_text(
+                buffer,
+                first_match[1] - 1,
+                first_match[2] - 1,
+                second_match[1] - 1,
+                second_match[2],
+                {}
+            ),
+            "\n"
+        ),
+    }
 
     local submatches = vim.fn.matchstrlist(text, spec.pattern, { submatches = true })
 
@@ -49,25 +54,6 @@ local function create_match(buffer, spec, first_match, second_match)
         },
         spec = spec,
     }
-end
-
-local function find_match_on_line(lnum, col, pattern)
-    local match
-
-    keep_cursor(function()
-        vim.api.nvim_win_set_cursor(0, { lnum, 0 })
-        match = vim.fn.searchpos(pattern, "W")
-
-        while match[1] == lnum do
-            match = vim.fn.searchpos(pattern, "W")
-
-            if match[2] >= col then
-
-            end
-        end
-    end)
-
-    return match
 end
 
 ---@param buffer integer
@@ -109,7 +95,7 @@ function patterns.find_at_cursor(buffer, spec)
     col = col + 1
     local first_match = vim.fn.searchpos(spec.pattern, "cnbW")
 
-    if first_match[1] == 0  then
+    if first_match[1] == 0 then
         if not spec.multiline and first_match[1] ~= lnum then
             return
         end
@@ -132,43 +118,120 @@ function patterns.find_at_cursor(buffer, spec)
     return match
 end
 
----@param line string
----@param match_spec terminal-diagnostics.MatchSpec
----@param lnum integer?
----@return terminal-diagnostics.Match?
-function patterns.find_in_line(line, match_spec, lnum)
-    local pattern = match_spec.pattern
-    local match, start_col, end_col = unpack(vim.fn.matchstrpos(line, pattern))
-
-    if start_col == -1 then
-        return
-    end
-
-    local submatches = vim.fn.matchstrlist({ line }, match_spec.pattern, { submatches = true })
-
-    return {
-        text = match,
-        submatches = submatches[1] and submatches[1].submatches or {},
-        from = { lnum = lnum or -1, col = start_col },
-        to = { lnum = lnum or -1, col = end_col },
-    }
-end
-
 ---@param lines string[]
----@param match_spec terminal-diagnostics.MatchSpec
+---@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param start_lnum integer?
 ---@return integer
-function patterns.find_in_lines(lines, match_spec)
-    local pattern = match_spec.pattern
-
-    for lnum, line in ipairs(lines) do
-        local _, start_col, _ = unpack(vim.fn.matchstrpos(line, pattern))
-
-        if start_col ~= -1 then
+function patterns.find_in_lines(lines, match_spec, start_lnum)
+    for lnum = start_lnum or 1, #lines do
+        if patterns.find_at_line_fast(lines, match_spec, lnum) then
             return lnum
         end
     end
 
     return -1
+end
+
+local function merge_submatches(target, submatches)
+    local end_idx
+
+    -- Merge backwards because empty matches might occur between
+    -- non-empty matches due to optional capture groups e.g.
+    --
+    -- { "a", "", "b", "c", "", "", "", "", "" }
+    for idx = #submatches, 1, -1 do
+        if submatches[idx] ~= "" then
+            end_idx = idx
+            break
+        end
+    end
+
+    if not end_idx then
+        return
+    end
+
+    for idx = 1, end_idx do
+        table.insert(target, submatches[idx])
+    end
+end
+
+---@param lines string[]
+---@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param lnum integer
+---@return terminal-diagnostics.Match?
+function patterns.find_at_line(lines, match_spec, lnum)
+    local text = {}
+    local submatches = {}
+    local from = { lnum = lnum, col = math.huge }
+    local to = { lnum = -1, col = -1 }
+    local match_count = 0
+
+    lnum = lnum or 1
+
+    for pidx, subpattern in ipairs(match_spec.subpatterns) do
+        local offset = lnum + pidx - 1
+        local line = lines[offset]
+        local match, start_col, end_col = unpack(vim.fn.matchstrpos(line, subpattern))
+
+        if start_col == -1 then
+            break
+        end
+
+        match_count = match_count + 1
+
+        local _submatches = vim.fn.matchstrlist(
+            { line },
+            subpattern,
+            { submatches = true }
+        )
+        vim.print(vim.inspect(_submatches))
+
+        table.insert(text, match)
+        merge_submatches(submatches, _submatches[1] and _submatches[1].submatches or {})
+
+        from.col = math.min(from.col, start_col)
+        to.lnum = offset
+        to.col = end_col
+    end
+
+    if match_count < #match_spec.subpatterns then
+        return nil
+    end
+
+    return {
+        text = table.concat(text, "\n"),
+        submatches = submatches,
+        from = from,
+        to = to,
+    }
+end
+
+--- Like find_at_line but just confirms if the match spec matches at the given line
+---@param lines string[]
+---@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param lnum integer
+---@return boolean
+function patterns.find_at_line_fast(lines, match_spec, lnum)
+    local match_count = 0
+    lnum = lnum or 1
+
+    for pidx, subpattern in ipairs(match_spec.subpatterns) do
+        local offset = lnum + pidx - 1
+        local line = lines[offset]
+        local _, start_col, _ = unpack(vim.fn.matchstrpos(line, subpattern))
+
+        if start_col == -1 then
+            return false
+        end
+
+        match_count = match_count + 1
+    end
+
+    if match_count < #match_spec.subpatterns then
+        return false
+    end
+
+    return true
 end
 
 --- Parse the subgroups in a pattern and figure out their locations in the
@@ -203,10 +266,7 @@ function patterns.parse_subgroups(match_string, spec)
         local _, sub_start_col, sub_end_col =
             unpack(vim.fn.matchstrpos(match_string, subpattern))
 
-        table.insert(
-            submatches,
-            { start_col = sub_start_col + 1, end_col = sub_end_col }
-        )
+        table.insert(submatches, { start_col = sub_start_col + 1, end_col = sub_end_col })
 
         idx = end_col + 1
     until idx > #pattern
