@@ -9,31 +9,48 @@ function Matcher.new()
     return setmetatable({}, Matcher)
 end
 
+function Matcher.validate(value)
+    vim.validate("matcher", value, function(maybe_matcher)
+        return getmetatable(maybe_matcher) == Matcher
+    end, "a Matcher class instance")
+end
+
 ---@return terminal-diagnostics.MatchSpec[]
 function Matcher:specs()
+    return {}
 end
 
 ---@param options terminal-diagnostics.MatchOptions
 ---@return terminal-diagnostics.MatchResult2[]
-function Matcher:match(options) end
+---@diagnostic disable-next-line: unused-local
+function Matcher:match(options)
+    return {}
+end
 
 ---@param options terminal-diagnostics.MatchOptions
 ---@return terminal-diagnostics.Match?
+---@diagnostic disable-next-line: unused-local
 function Matcher:find_match_start(options) end
 
 ---@param options terminal-diagnostics.MatchAtCursorOptions
 ---@return terminal-diagnostics.MatchResult2[]
-function Matcher:match_at_cursor(options) end
+---@diagnostic disable-next-line: unused-local
+function Matcher:match_at_cursor(options)
+    return {}
+end
 
 function Matcher:resolve_specs() end
 
 --- Prepare a match spec for use in parsing
 ---@param spec terminal-diagnostics.MatchSpec
----@return terminal-diagnostics._ResolvedMatchSpec
+---@return terminal-diagnostics.ResolvedMatchSpec
 function Matcher.resolve_spec(spec)
     local resolved_spec = spec
 
+    ---@diagnostic disable-next-line: inject-field
     resolved_spec.multiline = spec.pattern:find([[\n]], 1, true)
+
+    ---@diagnostic disable-next-line: inject-field
     resolved_spec.subpatterns = vim.split(spec.pattern, [[\n]], { plain = true })
 
     if #resolved_spec.subpatterns > 1 then
@@ -46,11 +63,15 @@ function Matcher.resolve_spec(spec)
         end
     end
 
+    ---@cast resolved_spec terminal-diagnostics.ResolvedMatchSpec
     return resolved_spec
 end
 
 ---@param results terminal-diagnostics.MatchResult2[]
 ---@return terminal-diagnostics.MatchResult
-function Matcher:extract_values(results) end
+---@diagnostic disable-next-line: unused-local
+function Matcher:extract_values(results)
+    return {}
+end
 
 return Matcher

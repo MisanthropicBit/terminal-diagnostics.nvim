@@ -22,7 +22,7 @@ local matchers = {}
 ---@field code      integer?
 ---@field message   integer?
 
----@class (exact) terminal-diagnostics._ResolvedMatchSpec : terminal-diagnostics.MatchSpec
+---@class (exact) terminal-diagnostics.ResolvedMatchSpec : terminal-diagnostics.MatchSpec
 ---@field multiline   boolean
 ---@field subpatterns string[]
 
@@ -50,29 +50,11 @@ local matchers = {}
 
 ---@class terminal-diagnostics.MatchAtCursorOptions
 ---@field buffer  integer
----@field extract boolean?
 
 ---@class terminal-diagnostics.MatchOptions: terminal-diagnostics.MatchAtCursorOptions
 ---@field lnum    integer
 ---@field col     integer
 ---@field count   integer?
----@field extract boolean?
-
-----@class terminal-diagnostics.Matcher
-----@field match fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
-----@field match_start fun(options: terminal-diagnostics.MatchOptions): terminal-diagnostics.Match?
-----@field match_at_cursor fun(options: terminal-diagnostics.MatchAtCursorOptions): terminal-diagnostics.MatchSpec?, terminal-diagnostics.Match?
-----@field specs fun(): terminal-diagnostics.MatchSpec[]
-
-local supported_matchers = {}
-
-local cached_matchers
-
----@enum terminal-diagnostics.MatchSpecKind
-matchers.MatchSpecKind = {
-    Simple = "simple",
-    Header = "header",
-}
 
 ---@generic T
 ---@param idx (integer | { index: integer, resolve: fun(value: any): T })?
@@ -167,23 +149,6 @@ function matchers.extract_from_match(match_spec, match)
     }
 end
 
----@param filter string[]?
----@return terminal-diagnostics.Matcher[]
-function matchers.get_all(filter)
-    -- Many of the patterns were borrowed and modified from stevearc/overseer.nvim and ej-shafran/compile-mode.nvim
-    return {
-        require("terminal-diagnostics.builtins.tsc"),
-        -- require("terminal-diagnostics.builtins.eslint-compact"),
-        -- require("terminal-diagnostics.builtins.eslint-stylish"),
-        -- require("terminal-diagnostics.builtins.jest"),
-        -- require("terminal-diagnostics.builtins.python-stacktrace"),
-        -- require("terminal-diagnostics.builtins.pytest"),
-        -- require("terminal-diagnostics.builtins.gcc"),
-        -- require("terminal-diagnostics.builtins.lua-stacktrace"),
-        -- require("terminal-diagnostics.builtins.rustc"),
-    }
-end
-
 ---@param spec terminal-diagnostics.MatchSpec
 ---@return boolean
 function matchers.spec_has_info(spec)
@@ -200,36 +165,6 @@ end
 ---@return string[]
 function matchers.match_spec_keys()
     return { "path", "lnum", "col", "severity", "code", "message" }
-end
-
----@param value unknown
----@return boolean
-function matchers.validator(value)
-    if type(value) ~= "table" then
-        return false
-    end
-
-    -- if type(value.kind) ~= "function" then
-    --     return false
-    -- end
-
-    if type(value.match) ~= "function" then
-        return false
-    end
-
-    if type(value.find_match_start) ~= "function" then
-        return false
-    end
-
-    if type(value.match_at_cursor) ~= "function" then
-        return false
-    end
-
-    if type(value.extract_values) ~= "function" then
-        return false
-    end
-
-    return true
 end
 
 return matchers

@@ -119,7 +119,7 @@ function patterns.find_at_cursor(buffer, spec)
 end
 
 ---@param lines string[]
----@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param match_spec terminal-diagnostics.ResolvedMatchSpec
 ---@param start_lnum integer?
 ---@return integer
 function patterns.find_in_lines(lines, match_spec, start_lnum)
@@ -156,7 +156,7 @@ local function merge_submatches(target, submatches)
 end
 
 ---@param lines string[]
----@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param match_spec terminal-diagnostics.ResolvedMatchSpec
 ---@param lnum integer
 ---@return terminal-diagnostics.Match?
 function patterns.find_at_line(lines, match_spec, lnum)
@@ -208,7 +208,7 @@ end
 
 --- Like find_at_line but just confirms if the match spec matches at the given line
 ---@param lines string[]
----@param match_spec terminal-diagnostics._ResolvedMatchSpec
+---@param match_spec terminal-diagnostics.ResolvedMatchSpec
 ---@param lnum integer
 ---@return boolean
 function patterns.find_at_line_fast(lines, match_spec, lnum)

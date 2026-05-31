@@ -1,4 +1,5 @@
-local generators = require("terminal-diagnostics.matchers.generators")
+local CommandSpec = require("terminal-diagnostics.command_spec")
+local HeaderMatcher = require("terminal-diagnostics.matchers.header_matcher")
 
 ---@type terminal-diagnostics.MatchSpec
 local header_spec = {
@@ -17,11 +18,9 @@ local error_line_spec = {
     col = 3,
 }
 
-local lua_stacktrace = generators.generate_header_matcher({
-    name = "lua-stacktrace",
-    kind = "stacktrace",
+local matcher = HeaderMatcher.new({
     header_spec = header_spec,
     error_spec = error_line_spec,
 })
 
-return lua_stacktrace
+return CommandSpec.new("lua-stacktrace", CommandSpec.CommandKind.Build, matcher)

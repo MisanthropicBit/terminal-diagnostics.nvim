@@ -1,7 +1,6 @@
 local Matcher = require("terminal-diagnostics.matchers.matcher")
 local utils = require("terminal-diagnostics.utils")
 local matchers = require("terminal-diagnostics.matchers")
-local matcher_utils = require("terminal-diagnostics.matchers.utils")
 
 -- TODO: Rename to SectionedMatcher or SplitMatcher and take an array of specs
 -- that are aggregated on extraction. Covers both eslint-stylish and rustc

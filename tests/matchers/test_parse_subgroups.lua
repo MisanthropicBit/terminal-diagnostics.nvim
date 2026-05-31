@@ -1,9 +1,9 @@
 local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
 
-local parse_subgroup = require("lua.terminal-diagnostics.matchers.parse_subgroups")
+local parse_subgroup = require("terminal-diagnostics.matchers.parse_subgroups")
 
--- TODO: Support and test multiline regexes
+-- TODO: Test multiline regexes
 
 -- TODO: Expose so we do not redefine them in tests
 local tsc_spec = {
