@@ -13,26 +13,28 @@ local patterns = {}
 
 local function keep_cursor(func)
     local cursor = vim.api.nvim_win_get_cursor(0)
-
-    func()
+    local result = func()
 
     vim.api.nvim_win_set_cursor(0, cursor)
+
+    return result
 end
 
----@param buffer       integer
----@param spec         terminal-diagnostics.MatchSpec
----@param first_match  terminal-diagnostics.Position
----@param second_match terminal-diagnostics.Position
+---@param buffer      integer
+---@param spec        terminal-diagnostics.MatchSpec
+---@param start_match terminal-diagnostics.Position
+---@param end_match   terminal-diagnostics.Position
 ---@return terminal-diagnostics.Match
-local function create_match(buffer, spec, first_match, second_match)
+local function create_match(buffer, spec, start_match, end_match)
+    -- FIX: first_match and second_match are not Positions
     local text = {
         table.concat(
             vim.api.nvim_buf_get_text(
                 buffer,
-                first_match[1] - 1,
-                first_match[2] - 1,
-                second_match[1] - 1,
-                second_match[2],
+                start_match[1] - 1,
+                start_match[2] - 1,
+                end_match[1] - 1,
+                end_match[2],
                 {}
             ),
             "\n"
@@ -45,12 +47,12 @@ local function create_match(buffer, spec, first_match, second_match)
         text = text,
         submatches = submatches[1] and submatches[1].submatches or {},
         from = {
-            lnum = first_match[1],
-            col = first_match[2],
+            lnum = start_match[1],
+            col = start_match[2],
         },
         to = {
-            lnum = second_match[1],
-            col = second_match[2],
+            lnum = end_match[1],
+            col = end_match[2],
         },
         spec = spec,
     }
@@ -86,36 +88,73 @@ function patterns.find(buffer, spec, count)
     return match
 end
 
+---@param spec terminal-diagnostics.ResolvedMatchSpec
+local function find_at_cursor_singleline(spec, lnum, col)
+    local start_match = vim.fn.searchpos(spec.pattern, "cnbW")
+    local start_lnum, start_col = unpack(start_match)
+
+    if start_lnum ~= lnum then
+        return
+    end
+
+    local end_match = vim.fn.searchpos(spec.pattern, "cneW")
+    local end_lnum, end_col = unpack(end_match)
+
+    if end_lnum ~= lnum then
+        return
+    end
+
+    if lnum >= start_lnum and lnum <= end_lnum then
+        if col >= start_col and col <= end_col then
+            return start_match, end_match
+        end
+    end
+end
+
+---@param spec terminal-diagnostics.ResolvedMatchSpec
+local function find_at_cursor_multiline(spec, lnum, col)
+    local start_match = vim.fn.searchpos(spec.pattern, "cnbW")
+    local start_lnum, start_col = unpack(start_match)
+    vim.print(vim.inspect(spec))
+    local spec_lines = #spec.subpatterns
+
+    if start_lnum == 0 then
+        return
+    end
+
+    if lnum >= start_lnum and lnum <= start_lnum + spec_lines - 1 then
+        local _end_col = #spec.subpatterns[#spec.subpatterns]
+
+        if col >= start_col and col <= _end_col then
+            local end_match = keep_cursor(function()
+                vim.api.nvim_win_set_cursor(0, { start_lnum, start_col })
+
+                return vim.fn.searchpos(spec.pattern, "cneW")
+            end)
+
+
+            return start_match, end_match
+        end
+    end
+end
+
 ---@param buffer integer
----@param spec terminal-diagnostics.MatchSpec
+---@param spec terminal-diagnostics.ResolvedMatchSpec
 ---@return terminal-diagnostics.Match?
 function patterns.find_at_cursor(buffer, spec)
-    local match
     local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
     col = col + 1
-    local first_match = vim.fn.searchpos(spec.pattern, "cnbW")
+    local start_match, end_match
 
-    if first_match[1] == 0 then
-        if not spec.multiline and first_match[1] ~= lnum then
-            return
-        end
+    if spec.multiline then
+        start_match, end_match = find_at_cursor_multiline(spec, lnum, col)
+    else
+        start_match, end_match = find_at_cursor_singleline(spec, lnum, col)
     end
 
-    local second_match = vim.fn.searchpos(spec.pattern, "cneW")
-
-    if second_match[1] == 0 then
-        if not spec.multiline and second_match[1] ~= lnum then
-            return
-        end
+    if start_match and end_match then
+        return create_match(buffer, spec, start_match, end_match)
     end
-
-    if lnum >= first_match[1] and lnum <= second_match[1] then
-        if col >= first_match[2] and col <= second_match[2] then
-            match = create_match(buffer, spec, first_match, second_match)
-        end
-    end
-
-    return match
 end
 
 ---@param lines string[]
