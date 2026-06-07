@@ -1,5 +1,6 @@
 local select = {}
 
+local api_utils = require("terminal-diagnostics.api.api_utils")
 local utils = require("terminal-diagnostics.utils")
 
 ---@enum terminal-diagnostics.SelectField
@@ -93,19 +94,6 @@ local function handle_inner_select(cursor_result, options)
     })
 end
 
----@param api_result terminal-diagnostics.ApiResult
----@return terminal-diagnostics.parser.ParseResult?
-local function get_single_parse_result_with_context(api_result)
-    local parse_results = api_result.command_spec:parser():parse_buffer(0, {
-        offset = api_result.results[1].match.from.lnum,
-        count = 1,
-    })
-
-    if #parse_results == 1 and parse_results[1].context then
-        return parse_results[1]
-    end
-end
-
 ---@param cursor_result terminal-diagnostics.ApiResult?
 ---@param options terminal-diagnostics.SelectOptions
 ---@return terminal-diagnostics.ApiResult?, terminal-diagnostics.Range?
@@ -117,7 +105,7 @@ local function handle_outer_select(cursor_result, options)
             return cursor_result
         end
 
-        local parse_result = get_single_parse_result_with_context(cursor_result)
+        local parse_result = api_utils.get_single_parse_result_with_context(cursor_result)
 
         if parse_result then
             local context = parse_result.context
@@ -149,7 +137,7 @@ local function handle_outer_select(cursor_result, options)
             return
         end
 
-        local parse_result = get_single_parse_result_with_context(prev)
+        local parse_result = api_utils.get_single_parse_result_with_context(prev)
 
         if parse_result then
             local context = parse_result.context
@@ -183,7 +171,7 @@ local function handle_outer_select(cursor_result, options)
             return next
         end
 
-        local parse_result = get_single_parse_result_with_context(next)
+        local parse_result = api_utils.get_single_parse_result_with_context(next)
 
         if parse_result then
             local context = parse_result.context
