@@ -9,7 +9,6 @@ local header_spec = {
     pattern = [=[\v^(%([a-zA-Z]:)*[./\\]+.{-})\n]=] .. error_spec_pattern,
     path = 1,
     path_kind = "absolute",
-    multiline = true,
 }
 
 ---@type terminal-diagnostics.MatchSpec

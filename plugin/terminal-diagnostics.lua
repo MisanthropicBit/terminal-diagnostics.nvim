@@ -3,7 +3,7 @@ local open_command_complete_args
 local function open_command_complete()
     if not open_command_complete_args then
         open_command_complete_args =
-            vim.tbl_values(require("terminal-diagnostics.api.open_type").OpenType)
+            vim.tbl_values(require("terminal-diagnostics.api.open_type"))
     end
 
     return open_command_complete_args

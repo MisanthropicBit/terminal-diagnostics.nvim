@@ -55,8 +55,6 @@ function SimpleParser:parse(lines, options)
             local lnum = idx + offset - 1
             local match = utils.patterns.find_at_line(lines, spec, lnum)
 
-            vim.print(vim.inspect(match))
-
             if not match then
                 goto continue
             end

@@ -77,8 +77,14 @@ function Parser.create_parse_result(values)
         buffer = values.buffer,
         kind = values.kind,
         range = {
-            start = { lnum = matches[1].from.lnum, col = matches[#matches].from.col },
-            end_ = { lnum = matches[1].to.lnum, col = matches[#matches].to.col },
+            start = {
+                lnum = matches[1].from.lnum,
+                col = matches[#matches].from.col,
+            },
+            end_ = {
+                lnum = matches[1].to.lnum,
+                col = matches[#matches].to.col,
+            },
         },
         matches = matches,
     }

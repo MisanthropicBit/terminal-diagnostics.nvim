@@ -58,8 +58,9 @@ function HeaderParser:parse(lines, options)
 
             local parse_result = Parser.create_parse_result({
                 source = source,
+                buffer = options.buffer,
                 kind = kind,
-                matches = { last_header_match, error_match },
+                matches = { error_match }, -- TODO: Do we need last_header_match here?
             })
 
             if extract_match then

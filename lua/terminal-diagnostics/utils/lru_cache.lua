@@ -16,7 +16,7 @@ LruCache.__index = LruCache
 ---@param options terminal-diagnostics.LruCacheOptions
 ---@return terminal-diagnostics.LruCache
 function LruCache.new(values, options)
-    vim.validate("values", values, "table")
+    vim.validate("values", values, "table", true)
     vim.validate("options.max_size", options.max_size, "number")
     vim.validate("options.default", options.default, "function", true)
 
