@@ -1,5 +1,5 @@
 local Matcher = require("terminal-diagnostics.matchers.matcher")
-local utils = require("terminal-diagnostics.utils")
+local patterns = require("terminal-diagnostics.patterns")
 local matchers = require("terminal-diagnostics.matchers")
 
 -- TODO: Rename to SectionedMatcher or SplitMatcher and take an array of specs
@@ -39,7 +39,7 @@ function HeaderMatcher:match(options)
 
     if self.last_match_pos then
         local spec = self.last_match_type == "header" and self.header_spec or self.error_spec
-        local match = utils.patterns.find_at_cursor(buffer, spec)
+        local match = patterns.find_at_cursor(buffer, spec)
 
         if match then
             self.last_match_pos = nil
@@ -70,10 +70,10 @@ end
 ---@param options terminal-diagnostics.MatchOptions
 function HeaderMatcher:match_upwards(options)
     local error_match =
-        utils.patterns.find(options.buffer, self.error_spec, options.count)
+        patterns.find(options.buffer, self.error_spec, options.count)
 
     if error_match then
-        local header_match = utils.patterns.find(options.buffer, self.header_spec, -1)
+        local header_match = patterns.find(options.buffer, self.header_spec, -1)
 
         if header_match then
             return {
@@ -90,19 +90,19 @@ end
 ---@param options terminal-diagnostics.MatchOptions
 function HeaderMatcher:match_downwards(options)
     local header_match =
-        utils.patterns.find(options.buffer, self.header_spec, options.count)
+        patterns.find(options.buffer, self.header_spec, options.count)
 
     if header_match then
         return { spec = self.header_spec, match = header_match }
     end
 
-    local error_match = utils.patterns.find(options.buffer, self.error_spec, 1)
+    local error_match = patterns.find(options.buffer, self.error_spec, 1)
 
     if error_match then
         local results = {}
         table.insert(results, { spec = self.error_spec, match = error_match })
 
-        header_match = utils.patterns.find(options.buffer, self.header_spec, -1)
+        header_match = patterns.find(options.buffer, self.header_spec, -1)
 
         if header_match then
             table.insert(results, { spec = self.header_spec, match = header_match })
@@ -119,8 +119,8 @@ end
 function HeaderMatcher:find_match_start(options)
     local buffer = options.buffer
     local count = options.count or 1
-    local header_match = utils.patterns.find(buffer, self.header_spec, count)
-    local error_match = utils.patterns.find(buffer, self.error_spec, count)
+    local header_match = patterns.find(buffer, self.header_spec, count)
+    local error_match = patterns.find(buffer, self.error_spec, count)
 
     if header_match then
         if error_match then
@@ -157,17 +157,17 @@ end
 function HeaderMatcher:match_at_cursor(options)
     local buffer = options.buffer
     local results = {}
-    local header_match = utils.patterns.find_at_cursor(buffer, self.header_spec)
+    local header_match = patterns.find_at_cursor(buffer, self.header_spec)
 
     if header_match then
         -- If on a header that should be included (has info), just return that
         return { { spec = self.header_spec, match = header_match } }
     else
-        local error_match = utils.patterns.find_at_cursor(buffer, self.error_spec)
+        local error_match = patterns.find_at_cursor(buffer, self.error_spec)
 
         if error_match then
             -- If including the header, find it and add it
-            local _header_match = utils.patterns.find(buffer, self.header_spec, -1)
+            local _header_match = patterns.find(buffer, self.header_spec, -1)
 
             if _header_match then
                 table.insert(results, { spec = self.header_spec, match = _header_match })

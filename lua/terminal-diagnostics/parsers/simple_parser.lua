@@ -1,6 +1,6 @@
 local Parser = require("terminal-diagnostics.parsers.parser")
 local matchers = require("terminal-diagnostics.matchers")
-local utils = require("terminal-diagnostics.utils")
+local patterns = require("terminal-diagnostics.patterns")
 
 ---@class terminal-diagnostics.parser.SimpleMatcherParser : terminal-diagnostics.parser.Parser
 ---@field private command_spec terminal-diagnostics.CommandSpec
@@ -53,7 +53,7 @@ function SimpleParser:parse(lines, options)
             end
 
             local lnum = idx + offset - 1
-            local match = utils.patterns.find_at_line(lines, spec, lnum)
+            local match = patterns.find_at_line(lines, spec, lnum)
 
             if not match then
                 goto continue

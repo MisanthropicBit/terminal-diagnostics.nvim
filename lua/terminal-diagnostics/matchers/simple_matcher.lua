@@ -1,6 +1,6 @@
 local Matcher = require("terminal-diagnostics.matchers.matcher")
 local matchers = require("terminal-diagnostics.matchers")
-local utils = require("terminal-diagnostics.utils")
+local patterns = require("terminal-diagnostics.patterns")
 
 ---@class (exact) terminal-diagnostics.SimpleMatcherOptions
 ---@field specs terminal-diagnostics.MatchSpec[]
@@ -33,7 +33,7 @@ function SimpleMatcher:match(options)
 
     for _, spec in ipairs(self:specs()) do
         if self.last_match_pos then
-            match = utils.patterns.find_at_cursor(_options.buffer, spec)
+            match = patterns.find_at_cursor(_options.buffer, spec)
 
             if match then
                 self.last_match_pos = nil
@@ -41,7 +41,7 @@ function SimpleMatcher:match(options)
                 return { { spec = spec, match = match } }
             end
         else
-            match = utils.patterns.find(_options.buffer, spec, count)
+            match = patterns.find(_options.buffer, spec, count)
 
             if match then
                 return { { spec = spec, match = match } }
@@ -59,7 +59,7 @@ function SimpleMatcher:find_match_start(options)
     local count = options.count or 1
 
     for _, spec in ipairs(self._specs) do
-        pos = utils.patterns.find(options.buffer, spec, count)
+        pos = patterns.find(options.buffer, spec, count)
         self.last_match_pos = pos
 
         if pos then
@@ -75,7 +75,7 @@ function SimpleMatcher:match_at_cursor(options)
     local match
 
     for _, spec in ipairs(self._specs) do
-        match = utils.patterns.find_at_cursor(options.buffer, spec)
+        match = patterns.find_at_cursor(options.buffer, spec)
 
         if match then
             return { { spec = spec, match = match } }

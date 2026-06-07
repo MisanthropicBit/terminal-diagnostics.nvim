@@ -3,6 +3,7 @@ local open = {}
 local notify = require("terminal-diagnostics.notify")
 local ui = require("terminal-diagnostics.ui")
 local OpenType = require("terminal-diagnostics.api.open_type")
+local range = require("terminal-diagnostics.range")
 
 ---@class terminal-diagnostics.OpenOptions
 ---@field type terminal-diagnostics.OpenType

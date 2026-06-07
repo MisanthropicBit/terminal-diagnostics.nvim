@@ -1,7 +1,7 @@
 local select = {}
 
 local api_utils = require("terminal-diagnostics.api.api_utils")
-local utils = require("terminal-diagnostics.utils")
+local range = require("terminal-diagnostics.range")
 
 ---@enum terminal-diagnostics.SelectField
 select.SelectField = {
@@ -143,7 +143,7 @@ local function handle_outer_select(cursor_result, options)
             local context = parse_result.context
             ---@cast context -nil
 
-            if utils.range.contains(context.range, lnum) then
+            if range.contains(context.range, lnum) then
                 return prev, {
                     start = parse_result.range.start,
                     end_ = context.range.end_,
@@ -177,7 +177,7 @@ local function handle_outer_select(cursor_result, options)
             local context = parse_result.context
             ---@cast context -nil
 
-            if utils.range.contains(context.range, lnum) then
+            if range.contains(context.range, lnum) then
                 return {
                     start = parse_result.range.start,
                     end_ = context.range.end_,
@@ -213,7 +213,7 @@ function select.select(options)
     end
 
     -- if _options.field then
-    --     local subgroups = utils.patterns.parse_subgroups(result.results[1].match.text, result.results[1].spec)
+    --     local subgroups = patterns.parse_subgroups(result.results[1].match.text, result.results[1].spec)
     --     local subgroup = subgroups[_options.field]
     --
     --     from = { lnum = from.lnum, col = subgroup.start_col }

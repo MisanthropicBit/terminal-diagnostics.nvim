@@ -1,5 +1,5 @@
 local Parser = require("terminal-diagnostics.parsers.parser")
-local utils = require("terminal-diagnostics.utils")
+local patterns = require("terminal-diagnostics.patterns")
 
 ---@class terminal-diagnostics.parser.HeaderMatcherParser : terminal-diagnostics.parser.Parser
 ---@field private command_spec terminal-diagnostics.CommandSpec
@@ -35,7 +35,7 @@ function HeaderParser:parse(lines, options)
         local lnum = idx + offset - 1
 
         if last_header_match then
-            local error_match = utils.patterns.find_at_line(lines, error_spec, lnum)
+            local error_match = patterns.find_at_line(lines, error_spec, lnum)
 
             if not error_match then
                 goto continue
@@ -75,7 +75,7 @@ function HeaderParser:parse(lines, options)
             -- Start the match for intermediary error output after the actual error line
             start_marker = idx + 1
         else
-            last_header_match = utils.patterns.find_at_line(lines, header_spec, lnum)
+            last_header_match = patterns.find_at_line(lines, header_spec, lnum)
         end
 
         :: continue ::

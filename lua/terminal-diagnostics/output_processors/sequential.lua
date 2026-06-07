@@ -5,7 +5,7 @@ local diagnostics = require("terminal-diagnostics.diagnostics")
 local guess_command = require("terminal-diagnostics.output_processors.guess_command")
 local log = require("terminal-diagnostics.log")
 local notify = require("terminal-diagnostics.notify")
-local utils = require("terminal-diagnostics.utils")
+local patterns = require("terminal-diagnostics.patterns")
 
 ---@class terminal-diagnostics.SequentialOutputProcessorOptions
 ---@field terminal_diagnostics boolean?
@@ -34,7 +34,7 @@ local function get_command_specs(input, output)
         for _, command_spec in ipairs(builtin_command_specs) do
             for _, match_spec in ipairs(command_spec:matcher():specs()) do
                 if match_spec.subpatterns then
-                    local lnum = utils.patterns.find_in_lines(output, match_spec)
+                    local lnum = patterns.find_in_lines(output, match_spec)
 
                     if lnum ~= -1 then
                         table.insert(command_specs, command_spec)

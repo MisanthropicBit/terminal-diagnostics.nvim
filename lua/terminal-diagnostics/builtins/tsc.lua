@@ -1,7 +1,7 @@
 local CommandSpec = require("terminal-diagnostics.command_spec")
 local SimpleMatcher = require("terminal-diagnostics.matchers.simple_matcher")
 
--- require("terminal-diagnostics.utils").patterns.find(361, { pattern = [=[\v^([^[:space:]].*)[\(:](\d+)[,:](\d+)%(\):\s+|\s+-\s+)(error|warning|info)\s+TS(\d+)\s*:\s*(.*)$]=], path_kind = "relative", path = 1, lnum = 2, col = 3, severity = 4, code = 5, message = 6 }, 1)
+-- require("terminal-diagnostics").patterns.find(361, { pattern = [=[\v^([^[:space:]].*)[\(:](\d+)[,:](\d+)%(\):\s+|\s+-\s+)(error|warning|info)\s+TS(\d+)\s*:\s*(.*)$]=], path_kind = "relative", path = 1, lnum = 2, col = 3, severity = 4, code = 5, message = 6 }, 1)
 
 ---@type terminal-diagnostics.MatchSpec
 local match_spec = {
