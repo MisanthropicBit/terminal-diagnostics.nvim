@@ -38,13 +38,13 @@ function SimpleMatcher:match(options)
             if match then
                 self.last_match_pos = nil
 
-                return { spec = spec, match = match }
+                return { { spec = spec, match = match } }
             end
         else
             match = utils.patterns.find(_options.buffer, spec, count)
 
             if match then
-                return { spec = spec, match = match }
+                return { { spec = spec, match = match } }
             end
         end
     end
@@ -83,12 +83,6 @@ function SimpleMatcher:match_at_cursor(options)
     end
 
     return {}
-end
-
-function SimpleMatcher:resolve_specs()
-    for _, spec in ipairs(self:specs()) do
-        Matcher.resolve_spec(spec)
-    end
 end
 
 function SimpleMatcher:extract_values(results)

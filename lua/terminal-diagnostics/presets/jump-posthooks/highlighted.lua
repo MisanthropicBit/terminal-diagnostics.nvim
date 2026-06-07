@@ -4,7 +4,7 @@ return function(options)
 
         ---@type integer[]
         local extmark_ids = {}
-        local spec_keys = require("terminal-diagnostics.matchers")
+        local spec_keys = require("terminal-diagnostics.matchers").match_spec_keys()
 
         for _, key in ipairs(spec_keys) do
             local pos = context.submatches[key]

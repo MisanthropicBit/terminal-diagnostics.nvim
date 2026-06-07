@@ -39,7 +39,11 @@ function Matcher:match_at_cursor(options)
     return {}
 end
 
-function Matcher:resolve_specs() end
+function Matcher:resolve_specs()
+    for _, spec in ipairs(self:specs()) do
+        Matcher.resolve_spec(spec)
+    end
+end
 
 --- Prepare a match spec for use in parsing
 ---@param spec terminal-diagnostics.MatchSpec
@@ -48,7 +52,7 @@ function Matcher.resolve_spec(spec)
     local resolved_spec = spec
 
     ---@diagnostic disable-next-line: inject-field
-    resolved_spec.multiline = spec.pattern:find([[\n]], 1, true)
+    resolved_spec.multiline = spec.pattern:find([[\n]], 1, true) ~= nil
 
     ---@diagnostic disable-next-line: inject-field
     resolved_spec.subpatterns = vim.split(spec.pattern, [[\n]], { plain = true })
@@ -58,7 +62,9 @@ function Matcher.resolve_spec(spec)
 
         if has_magic then
             for idx, subpattern in ipairs(resolved_spec.subpatterns) do
-                resolved_spec.subpatterns[idx] = "\\v" .. subpattern
+                if idx ~= 1 then
+                    resolved_spec.subpatterns[idx] = "\\v" .. subpattern
+                end
             end
         end
     end
