@@ -15,7 +15,7 @@ function Matcher.validate(value)
     end, "a Matcher class instance")
 end
 
----@return terminal-diagnostics.MatchSpec[]
+---@return terminal-diagnostics.ResolvedMatchSpec[]
 function Matcher:specs()
     return {}
 end

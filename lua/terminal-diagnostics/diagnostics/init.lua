@@ -119,8 +119,8 @@ function diagnostics.terminal_from_parse_results(parse_results)
 
         local diagnostic = diagnostics.create({
             bufnr = parse_result.buffer,
-            lnum = parse_result.range.start.lnum - 1,
-            end_lnum = parse_result.range.end_.lnum - 1,
+            lnum = parse_result.range.start.lnum,
+            end_lnum = parse_result.range.end_.lnum,
             col = parse_result.range.start.col,
             end_col = parse_result.range.end_.col,
             severity = severity,

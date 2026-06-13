@@ -20,6 +20,29 @@ local function keep_cursor(func)
     return result
 end
 
+local function merge_submatches(target, submatches)
+    local end_idx
+
+    -- Merge backwards because empty matches might occur between
+    -- non-empty matches due to optional capture groups e.g.
+    --
+    -- { "a", "", "b", "c", "", "", "", "", "" }
+    for idx = #submatches, 1, -1 do
+        if submatches[idx] ~= "" then
+            end_idx = idx
+            break
+        end
+    end
+
+    if not end_idx then
+        return
+    end
+
+    for idx = 1, end_idx do
+        table.insert(target, submatches[idx])
+    end
+end
+
 ---@param buffer      integer
 ---@param spec        terminal-diagnostics.MatchSpec
 ---@param start_match terminal-diagnostics.Position
@@ -42,22 +65,26 @@ local function create_match(buffer, spec, start_match, end_match)
     }
 
     local submatches = vim.fn.matchstrlist(text, spec.pattern, { submatches = true })
+    local merged_submatches = {}
+    merge_submatches(merged_submatches, submatches[1] and submatches[1].submatches or {})
 
     return {
-        text = text,
-        submatches = submatches[1] and submatches[1].submatches or {},
+        text = text[1],
+        submatches = merged_submatches,
         from = {
-            lnum = start_match[1],
-            col = start_match[2],
+            lnum = start_match[1] - 1,
+            col = start_match[2] - 1,
         },
         to = {
-            lnum = end_match[1],
+            lnum = end_match[1] - 1,
             col = end_match[2],
         },
         spec = spec,
     }
 end
 
+--- Find a spec's pattern in a buffer. Does not find matches that the cursor is
+--- already inside of
 ---@param buffer integer
 ---@param spec   terminal-diagnostics.MatchSpec
 ---@param count  integer?
@@ -115,7 +142,6 @@ end
 local function find_at_cursor_multiline(spec, lnum, col)
     local start_match = vim.fn.searchpos(spec.pattern, "cnbW")
     local start_lnum, start_col = unpack(start_match)
-    vim.print(vim.inspect(spec))
     local spec_lines = #spec.subpatterns
 
     if start_lnum == 0 then
@@ -138,6 +164,7 @@ local function find_at_cursor_multiline(spec, lnum, col)
     end
 end
 
+--- Find a spec's pattern at the cursor position
 ---@param buffer integer
 ---@param spec terminal-diagnostics.ResolvedMatchSpec
 ---@return terminal-diagnostics.Match?
@@ -157,51 +184,59 @@ function patterns.find_at_cursor(buffer, spec)
     end
 end
 
+--- Like find_at_line but just confirms if the match spec matches at the given line
+---@param lines string[]
+---@param match_spec terminal-diagnostics.ResolvedMatchSpec
+---@param lnum integer
+---@return boolean
+local function find_at_line_fast(lines, match_spec, lnum)
+    local match_count = 0
+    lnum = lnum or 1
+
+    for pidx, subpattern in ipairs(match_spec.subpatterns) do
+        local offset = lnum + pidx - 1
+        local line = lines[offset]
+        local _, start_col, _ = unpack(vim.fn.matchstrpos(line, subpattern))
+
+        if start_col == -1 then
+            return false
+        end
+
+        match_count = match_count + 1
+    end
+
+    if match_count < #match_spec.subpatterns then
+        return false
+    end
+
+    return true
+end
+
+--- Find and return the line number where a a spec's pattern matches or -1 if
+--- there is no match
 ---@param lines string[]
 ---@param match_spec terminal-diagnostics.ResolvedMatchSpec
 ---@param start_lnum integer?
 ---@return integer
 function patterns.find_in_lines(lines, match_spec, start_lnum)
     for lnum = start_lnum or 1, #lines do
-        if patterns.find_at_line_fast(lines, match_spec, lnum) then
-            return lnum
+        if find_at_line_fast(lines, match_spec, lnum) then
+            return lnum - 1
         end
     end
 
     return -1
 end
 
-local function merge_submatches(target, submatches)
-    local end_idx
-
-    -- Merge backwards because empty matches might occur between
-    -- non-empty matches due to optional capture groups e.g.
-    --
-    -- { "a", "", "b", "c", "", "", "", "", "" }
-    for idx = #submatches, 1, -1 do
-        if submatches[idx] ~= "" then
-            end_idx = idx
-            break
-        end
-    end
-
-    if not end_idx then
-        return
-    end
-
-    for idx = 1, end_idx do
-        table.insert(target, submatches[idx])
-    end
-end
-
+--- Finds and returns a full match in a list of lines
 ---@param lines string[]
 ---@param match_spec terminal-diagnostics.ResolvedMatchSpec
----@param lnum integer
+---@param lnum integer?
 ---@return terminal-diagnostics.Match?
 function patterns.find_at_line(lines, match_spec, lnum)
     local text = {}
     local submatches = {}
-    local from = { lnum = lnum, col = math.huge }
+    local from = { lnum = -1, col = math.huge }
     local to = { lnum = -1, col = -1 }
     local match_count = 0
 
@@ -223,13 +258,13 @@ function patterns.find_at_line(lines, match_spec, lnum)
             subpattern,
             { submatches = true }
         )
-        vim.print(vim.inspect(_submatches))
 
         table.insert(text, match)
         merge_submatches(submatches, _submatches[1] and _submatches[1].submatches or {})
 
+        from.lnum = lnum - 1
         from.col = math.min(from.col, start_col)
-        to.lnum = offset
+        to.lnum = offset - 1
         to.col = end_col
     end
 
@@ -242,35 +277,8 @@ function patterns.find_at_line(lines, match_spec, lnum)
         submatches = submatches,
         from = from,
         to = to,
+        spec = match_spec,
     }
-end
-
---- Like find_at_line but just confirms if the match spec matches at the given line
----@param lines string[]
----@param match_spec terminal-diagnostics.ResolvedMatchSpec
----@param lnum integer
----@return boolean
-function patterns.find_at_line_fast(lines, match_spec, lnum)
-    local match_count = 0
-    lnum = lnum or 1
-
-    for pidx, subpattern in ipairs(match_spec.subpatterns) do
-        local offset = lnum + pidx - 1
-        local line = lines[offset]
-        local _, start_col, _ = unpack(vim.fn.matchstrpos(line, subpattern))
-
-        if start_col == -1 then
-            return false
-        end
-
-        match_count = match_count + 1
-    end
-
-    if match_count < #match_spec.subpatterns then
-        return false
-    end
-
-    return true
 end
 
 --- Parse the subgroups in a pattern and figure out their locations in the
