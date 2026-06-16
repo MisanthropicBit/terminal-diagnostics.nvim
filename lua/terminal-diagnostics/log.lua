@@ -252,19 +252,38 @@ end
 
 ---@param name string?
 function log.timing.stop(name)
-    local timing = timings[name]
+    local timing
 
-    if not timing then
-        timing = table.remove(ordered_timings)
+    if name then
+        timing = timings[name]
 
         if not timing then
             error(("No timing found with name '%s'"):format(name))
         end
+
+        timings[name] = nil
+    else
+        local last_name = ordered_timings[#ordered_timings]
+        timing = timings[last_name]
+
+        if not timing then
+            error("No timing found, did you forget to call log.timing.start?")
+        end
+
+        timings[last_name] = nil
     end
 
+    table.remove(ordered_timings)
     local elapsed_ms = vim.uv.hrtime() - timing.start_time
 
     log.debug("timing", timing, ("elapsed ms: %.2f"):format(elapsed_ms))
+end
+
+---@package
+--- Only used in testing
+function log.timing.clear()
+    timings = {}
+    ordered_timings = {}
 end
 
 for level_name, level in pairs(vim.log.levels) do
