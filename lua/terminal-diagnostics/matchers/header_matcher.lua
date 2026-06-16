@@ -11,8 +11,8 @@ local matchers = require("terminal-diagnostics.matchers")
 ---@field error_spec  terminal-diagnostics.MatchSpec
 
 ---@class terminal-diagnostics.HeaderMatcher : terminal-diagnostics.Matcher
----@field private header_spec    terminal-diagnostics.MatchSpec
----@field private error_spec     terminal-diagnostics.MatchSpec
+---@field private header_spec    terminal-diagnostics.ResolvedMatchSpec
+---@field private error_spec     terminal-diagnostics.ResolvedMatchSpec
 ---@field private include_header boolean
 local HeaderMatcher = setmetatable({}, Matcher)
 
@@ -93,7 +93,7 @@ function HeaderMatcher:match_downwards(options)
         patterns.find(options.buffer, self.header_spec, options.count)
 
     if header_match then
-        return { spec = self.header_spec, match = header_match }
+        return { { spec = self.header_spec, match = header_match } }
     end
 
     local error_match = patterns.find(options.buffer, self.error_spec, 1)

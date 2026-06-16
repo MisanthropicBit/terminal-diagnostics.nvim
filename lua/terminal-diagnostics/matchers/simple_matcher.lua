@@ -19,7 +19,7 @@ function SimpleMatcher.new(options)
     return setmetatable({ _specs = options.specs }, SimpleMatcher)
 end
 
----@return terminal-diagnostics.MatchSpec[]
+---@return terminal-diagnostics.ResolvedMatchSpec[]
 function SimpleMatcher:specs()
     return self._specs
 end
@@ -74,7 +74,7 @@ end
 function SimpleMatcher:match_at_cursor(options)
     local match
 
-    for _, spec in ipairs(self._specs) do
+    for _, spec in ipairs(self:specs()) do
         match = patterns.find_at_cursor(options.buffer, spec)
 
         if match then
