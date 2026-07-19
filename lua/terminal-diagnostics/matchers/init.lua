@@ -33,6 +33,7 @@ local matchers = {}
 ---@field submatches string[]
 ---@field from       terminal-diagnostics.Position
 ---@field to         terminal-diagnostics.Position
+---@field spec       terminal-diagnostics.MatchSpec
 
 --- The contextual data extracted from a match using a match spec
 ---@class (exact) terminal-diagnostics.MatchResult
@@ -44,17 +45,17 @@ local matchers = {}
 ---@field code     string?
 ---@field message  string?
 
+-- TODO: Just embed spec in the match
+
 ---@class (exact) terminal-diagnostics.MatchResult2
 ---@field spec terminal-diagnostics.MatchSpec
 ---@field match terminal-diagnostics.Match
 
 ---@class terminal-diagnostics.MatchAtCursorOptions
----@field buffer  integer
+---@field buffer integer
 
 ---@class terminal-diagnostics.MatchOptions: terminal-diagnostics.MatchAtCursorOptions
----@field lnum    integer
----@field col     integer
----@field count   integer?
+---@field count integer?
 
 ---@generic T
 ---@param idx (integer | { index: integer, resolve: fun(value: any): T })?
@@ -110,7 +111,7 @@ local function resolve_path(path, path_kind)
 end
 
 ---@param severity string
----@return vim.diagnostic.Severity
+---@return "ERROR" | "WARN" | "INFO" | "HINT"
 local function resolve_severity(severity)
     if not severity then
         return "INFO"
@@ -143,7 +144,7 @@ function matchers.extract_from_match(match_spec, match)
         paths = resolve_path(submatches[match_spec.path], match_spec.path_kind),
         lnum = resolve_value(match_spec.lnum, submatches, tonumber),
         col = resolve_value(match_spec.col, submatches, tonumber),
-        severity = resolve_value(match_spec.severity,submatches, resolve_severity),
+        severity = resolve_value(match_spec.severity, submatches, resolve_severity),
         code = submatches[match_spec.code],
         message = submatches[match_spec.message],
     }

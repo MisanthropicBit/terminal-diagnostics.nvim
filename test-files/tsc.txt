@@ -9,6 +9,6 @@ main.ts:6:26 - error TS2322: Type 'null' is not assignable to type 'Person'.
 main.ts:7:27 - error TS2322: Type 'undefined' is not assignable to type 'Person'.
 
 6     return undefined;
-      ~~~~~~~~~~~~
+      ~~~~~~~~~~~~~~~~~
 
 

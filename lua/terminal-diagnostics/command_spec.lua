@@ -1,19 +1,22 @@
 ---@class terminal-diagnostics.CommandSpec
----@field private _name        string
----@field private _kind        terminal-diagnostics.CommandKind
----@field private _has_context boolean
----@field private _matcher     terminal-diagnostics.Matcher
----@field private _parser      terminal-diagnostics.parser.Parser?
+---@field private _name            string
+---@field private _kind            terminal-diagnostics.CommandKind
+---@field private _is_context_line terminal-diagnostics.IsContextLineFunc?
+---@field private _matcher         terminal-diagnostics.Matcher
+---@field private _parser          terminal-diagnostics.parser.Parser?
 local CommandSpec = {}
 
--- TODO: Rename kind to tags?
+-- TODO: Rename kind to tags? Maybe have a base kind and tags?
 -- TODO: Add parent kind? eslint-compact => eslint?
+-- TODO: Move into command_spec(s) folder
 
 CommandSpec.__index = CommandSpec
 
+---@alias terminal-diagnostics.IsContextLineFunc fun(line: string): boolean
+
 ---@class (exact) terminal-diagnostics.CommandSpecOptions
----@field parser      terminal-diagnostics.parser.Parser?
----@field has_context boolean?
+---@field parser          terminal-diagnostics.parser.Parser?
+---@field is_context_line terminal-diagnostics.IsContextLineFunc?
 
 ---@enum terminal-diagnostics.CommandKind
 CommandSpec.CommandKind = {
@@ -42,7 +45,7 @@ function CommandSpec.new(name, kind, matcher, options)
     local command_spec = setmetatable({
         _name = name,
         _kind = kind,
-        _has_context = _options.has_context and true or false,
+        _is_context_line = _options.is_context_line,
         _matcher = matcher,
         _parser = _options.parser or nil,
     }, CommandSpec)
@@ -50,9 +53,7 @@ function CommandSpec.new(name, kind, matcher, options)
     command_spec._parser = _options.parser
 
     if not command_spec._parser then
-        command_spec._parser = require("terminal-diagnostics.parsers.simple_parser").new(command_spec)
-
-        -- require("terminal-diagnostics.parsers.generators").from_simple_matcher(command_spec, {})
+        command_spec._parser = require("terminal-diagnostics.parsers.simple_parser").new()
     end
 
     command_spec._parser:set_command_spec(command_spec)
@@ -68,12 +69,6 @@ end
 ---@return terminal-diagnostics.CommandKind
 function CommandSpec:kind()
     return self._kind
-end
-
----@return boolean
-function CommandSpec:has_context()
-    -- TODO: This should be a flag on the parser
-    return self._has_context
 end
 
 ---@return terminal-diagnostics.Matcher

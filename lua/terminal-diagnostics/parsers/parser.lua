@@ -7,7 +7,8 @@
 ---@field count   integer?
 
 ---@class terminal-diagnostics.parser.Parser
----@field _command_spec terminal-diagnostics.CommandSpec
+---@field _command_spec   terminal-diagnostics.CommandSpec
+---@field is_context_line (fun(self: terminal-diagnostics.parser.Parser, line: string): boolean)?
 local Parser = {}
 
 Parser.__index = Parser
@@ -34,11 +35,16 @@ end
 ---@param options terminal-diagnostics.ParseOptions
 ---@return terminal-diagnostics.parser.ParseResult[]
 function Parser:parse_buffer(buffer, options)
-    local offset = options and options.offset or 0
-    local last_lnum = vim.api.nvim_buf_line_count(buffer) - 1
-    local lines = vim.api.nvim_buf_get_lines(buffer, offset, last_lnum, true)
+    if not vim.api.nvim_buf_is_valid(buffer) then
+        -- TODO: How to handle?
+        return {}
+    end
 
-    return self:parse(lines, options)
+    local offset = options and options.offset or 1
+    local last_lnum = vim.api.nvim_buf_line_count(buffer)
+    local lines = vim.api.nvim_buf_get_lines(buffer, offset - 1, last_lnum, true)
+
+    return self:parse(lines, vim.tbl_extend("force", options, { buffer = buffer }))
 end
 
 ---@param lines string[]
@@ -46,8 +52,8 @@ end
 ---@param start integer
 ---@param end_ integer
 ---@return terminal-diagnostics.parser.ParseResultContext?
-function Parser.create_parse_context(lines, offset, start, end_)
-    local context_lines = vim.list_slice(lines, start, end_ - 1)
+function Parser.create_parse_context(lines, start, end_)
+    local context_lines = vim.list_slice(lines, start, end_)
 
     if #context_lines == 0 then
         return nil
@@ -57,12 +63,12 @@ function Parser.create_parse_context(lines, offset, start, end_)
         lines = context_lines,
         range = {
             start = {
-                lnum = offset + start - 1,
-                col = 1,
+                lnum = start - 1,
+                col = 0,
             },
             end_ = {
-                lnum = offset + end_ - 2,
-                col = 1, -- TODO: Should be end column of lnum
+                lnum = end_ - 1,
+                col = #lines[end_],
             },
         },
     }
@@ -88,6 +94,19 @@ function Parser.create_parse_result(values)
         },
         matches = matches,
     }
+end
+
+---@return boolean
+function Parser:has_context()
+    ---@diagnostic disable-next-line: undefined-field
+    return self.is_context_line ~= nil
+end
+
+---@param mixin table<string, function>
+function Parser:extend(mixin)
+    for method_name, impl in pairs(mixin) do
+        self[method_name] = impl
+    end
 end
 
 return Parser

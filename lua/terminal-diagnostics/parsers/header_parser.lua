@@ -78,26 +78,10 @@ function HeaderParser:parse(lines, options)
             last_header_match = patterns.find_at_line(lines, header_spec, lnum)
         end
 
-        :: continue ::
+        ::continue::
     end
 
     return results
-end
-
----@param buffer integer
----@param options terminal-diagnostics.ParseOptions
----@return terminal-diagnostics.parser.ParseResult[]
-function HeaderParser:parse_buffer(buffer, options)
-    if not vim.api.nvim_buf_is_valid(buffer) then
-        -- TODO: How to handle?
-        return {}
-    end
-
-    local offset = options and options.offset or 1
-    local last_lnum = vim.api.nvim_buf_line_count(buffer)
-    local lines = vim.api.nvim_buf_get_lines(buffer, offset - 1, last_lnum, true)
-
-    return self:parse(lines, options)
 end
 
 return HeaderParser

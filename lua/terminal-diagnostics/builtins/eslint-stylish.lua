@@ -2,18 +2,23 @@ local CommandSpec = require("terminal-diagnostics.command_spec")
 local HeaderMatcher = require("terminal-diagnostics.matchers.header_matcher")
 local HeaderParser = require("terminal-diagnostics.parsers.header_parser")
 
-local error_spec_pattern = [[\s+(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]]
+local error_spec_pattern = [[(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]]
+
+-- \v^(\/)?([.A-Za-z0-9-_]+\/)+[.A-Za-z0-9-_]+\.\w+
+-- \v^(%([a-zA-Z]:)*[./\\]+.{-})\n
+
+-- \\v^(\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+\\s+(\\d+):(\\d+)\\s+(error|warning|info)\\s+(.+)\\s+(.+)?$
 
 ---@type terminal-diagnostics.MatchSpec
 local header_spec = {
-    pattern = [=[\v^(%([a-zA-Z]:)*[./\\]+.{-})\n]=] .. error_spec_pattern,
+    pattern = "\\v^((\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n" .. error_spec_pattern,
     path = 1,
     path_kind = "absolute",
 }
 
 ---@type terminal-diagnostics.MatchSpec
 local error_spec = {
-    pattern = [[\v^]] .. error_spec_pattern,
+    pattern = [[\v^\s+]] .. error_spec_pattern,
     lnum = 1,
     col = 2,
     severity = 3,

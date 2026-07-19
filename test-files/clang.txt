@@ -1,0 +1,13 @@
+
+
+/Users/abc/src/types/type_checker.cpp:85:39: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?
+   85 |                 std::string message = std::format(
+      |                                       ^    ~~~~~~
+/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h:403:8: note: 'std::filesystem::path::format' declared here
+  403 |   enum format : unsigned char { auto_format, native_format, generic_format };
+      |        ^
+/Users/abc/src/types/type_checker.cpp:103:35: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?
+  103 |             std::string message = std::format(
+      |                                   ^    ~~~~~~
+
+

@@ -8,11 +8,11 @@ local SimpleParser = setmetatable({}, Parser)
 
 SimpleParser.__index = SimpleParser
 
----@param command_spec terminal-diagnostics.CommandSpec
+---@param command_spec terminal-diagnostics.CommandSpec?
 ---@return terminal-diagnostics.parser.SimpleMatcherParser
 function SimpleParser.new(command_spec)
     -- TODO: Check matcher kind
-    return setmetatable({ command_spec = command_spec }, SimpleParser)
+    return setmetatable({ _command_spec = command_spec }, SimpleParser)
 end
 
 ---@param lines string[]
@@ -20,42 +20,44 @@ end
 ---@return terminal-diagnostics.parser.ParseResult[]
 function SimpleParser:parse(lines, options)
     local results = {} ---@type terminal-diagnostics.parser.ParseResult[]
-    local start_marker ---@type integer?
-    local specs = self.command_spec:matcher():specs()
-    local offset = options and options.offset or 0
+    -- vim.print(vim.inspect(self))
+    local specs = self._command_spec:matcher():specs()
+    local _options = options or {}
+    local offset = _options.offset or 1
     local extract_match = false
     local count = 0
-    local source = self.command_spec:name()
-    local kind = self.command_spec:kind()
-    local has_context = self.command_spec:has_context()
+    local source = self._command_spec:name()
+    local kind = self._command_spec:kind()
+    local has_context = self:has_context()
 
-    if options.context then
+    if _options.context then
         -- TODO: Should this be handled here or in the processors?
 
         -- Only extract and resolve matches (which may take some time)
         -- if we are adding the results to some kind of list
         if
-            options.context.locationlist
-            or options.context.quickfix
-            or options.context.trouble
+            _options.context.locationlist
+            or _options.context.quickfix
+            or _options.context.trouble
         then
             extract_match = true
         end
     end
 
     extract_match = true
+    local idx = offset
 
-    for idx, _ in ipairs(lines) do
+    while idx <= #lines do
         for _, spec in ipairs(specs) do
             -- Skip specs that contain no information
             if not matchers.spec_has_info(spec) then
                 goto continue
             end
 
-            local lnum = idx + offset - 1
-            local match = patterns.find_at_line(lines, spec, lnum)
+            local match = patterns.find_at_line(lines, spec, idx)
 
             if not match then
+                idx = idx + 1
                 goto continue
             end
 
@@ -63,29 +65,6 @@ function SimpleParser:parse(lines, options)
             -- 1. Additional error output between error lines
             -- 2. Additional error output after and between error lines
             -- 3. No additional error output
-
-            if has_context then
-                if start_marker then
-                    results[#results].context = Parser.create_parse_context(
-                        lines,
-                        offset,
-                        start_marker,
-                        idx - 1
-                    )
-
-                    count = count + 1
-
-                    if options.count and count == options.count then
-                        break
-                    end
-                else
-                    count = count + 1
-
-                    if options.count and count == options.count then
-                        break
-                    end
-                end
-            end
 
             local parse_result = Parser.create_parse_result({
                 source = source,
@@ -102,8 +81,35 @@ function SimpleParser:parse(lines, options)
 
             table.insert(results, parse_result)
 
-            -- Start the match for intermediary error output after the actual error line
-            start_marker = idx + 1
+            if has_context then
+                idx = idx + #spec.subpatterns
+                local prev_idx = idx
+
+                while self:is_context_line(lines[idx]) do
+                    idx = idx + 1
+                end
+
+                if prev_idx < idx then
+                    results[#results].context = Parser.create_parse_context(
+                        lines,
+                        prev_idx,
+                        idx - 1
+                    )
+
+                    count = count + 1
+
+                    if _options.count and count == _options.count then
+                        break
+                    end
+                end
+            else
+                idx = idx + 1
+                count = count + 1
+
+                if _options.count and count == _options.count then
+                    break
+                end
+            end
 
             ::continue::
         end
@@ -117,40 +123,7 @@ function SimpleParser:parse(lines, options)
         return results
     end
 
-    -- Parse any remaining lines that are not delimited by an end pattern
-    if has_context and start_marker and start_marker < #lines then
-        -- local context_lines = vim.list_slice(lines, start_marker, #lines)
-        -- local is_empty = vim.iter(context_lines):all(function(line)
-        --     return vim.fn.trim(line) == ""
-        -- end)
-        --
-        -- if not is_empty then
-        results[#results].context = Parser.create_parse_context(
-            lines,
-            offset,
-            start_marker,
-            #lines
-        )
-        -- end
-    end
-
     return results
-end
-
----@param buffer integer
----@param options terminal-diagnostics.ParseOptions
----@return terminal-diagnostics.parser.ParseResult[]
-function SimpleParser:parse_buffer(buffer, options)
-    if not vim.api.nvim_buf_is_valid(buffer) then
-        -- TODO: How to handle?
-        return {}
-    end
-
-    local offset = options and options.offset or 1
-    local last_lnum = vim.api.nvim_buf_line_count(buffer)
-    local lines = vim.api.nvim_buf_get_lines(buffer, offset - 1, last_lnum, true)
-
-    return self:parse(lines, options)
 end
 
 return SimpleParser

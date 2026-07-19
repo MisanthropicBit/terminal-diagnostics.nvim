@@ -15,7 +15,4 @@ local parsers = {}
 
 ---@class terminal-diagnostics.ParseContext : terminal-diagnostics.SequentialOutputProcessorOptions
 
-----@class terminal-diagnostics.parser.Parser
-----@field parse fun(lines: string[], options: terminal-diagnostics.ParseOptions): terminal-diagnostics.parser.ParseResult[]
-
 return parsers
