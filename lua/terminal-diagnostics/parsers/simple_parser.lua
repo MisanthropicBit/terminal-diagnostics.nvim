@@ -71,7 +71,7 @@ function SimpleParser:parse(lines, options)
                 buffer = options.buffer,
                 kind = kind,
                 matches = { match },
-            })
+            }, offset - 1)
 
             if extract_match then
                 parse_result.values = self._command_spec:matcher():extract_values({
@@ -92,6 +92,7 @@ function SimpleParser:parse(lines, options)
                 if prev_idx < idx then
                     results[#results].context = Parser.create_parse_context(
                         lines,
+                        offset - 1,
                         prev_idx,
                         idx - 1
                     )

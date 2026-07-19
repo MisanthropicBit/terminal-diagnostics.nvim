@@ -2,10 +2,11 @@ local builtins = {}
 
 -- TODO: Make this automatic
 local builtin_command_specs = {
-    "tsc",
+    "clang",
     "eslint-compact",
     "eslint-stylish",
     "rustc",
+    "tsc",
 }
 
 ---@param filter string[]?

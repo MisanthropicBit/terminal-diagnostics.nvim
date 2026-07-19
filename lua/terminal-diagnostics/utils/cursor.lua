@@ -14,4 +14,12 @@ function cursor.get()
     return vim.api.nvim_win_get_cursor(0)
 end
 
+--- Same as utils.cursor.get but return an api indexed position
+---@return { [1]: integer, [2]: integer }
+function cursor.api_get()
+    local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
+
+    return { lnum - 1, col }
+end
+
 return cursor

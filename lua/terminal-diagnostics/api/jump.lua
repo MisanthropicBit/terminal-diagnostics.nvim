@@ -104,13 +104,13 @@ function jump.jump(options)
                 match_options.col = closest.match.to.col
             else
                 match_options.lnum = closest.match.from.lnum
-                match_options.col = closest.match.from.col - 1
+                match_options.col = closest.match.from.col
             end
 
             idx = idx + 1
         end
 
-        vim.api.nvim_win_set_cursor(0, { match_options.lnum, match_options.col })
+        vim.api.nvim_win_set_cursor(0, { match_options.lnum + 1, match_options.col })
     end
 
     if not closest.command_spec then

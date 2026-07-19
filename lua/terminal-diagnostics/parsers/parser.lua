@@ -52,7 +52,7 @@ end
 ---@param start integer
 ---@param end_ integer
 ---@return terminal-diagnostics.parser.ParseResultContext?
-function Parser.create_parse_context(lines, start, end_)
+function Parser.create_parse_context(lines, offset, start, end_)
     local context_lines = vim.list_slice(lines, start, end_)
 
     if #context_lines == 0 then
@@ -63,20 +63,23 @@ function Parser.create_parse_context(lines, start, end_)
         lines = context_lines,
         range = {
             start = {
-                lnum = start - 1,
+                lnum = start + offset - 1,
                 col = 0,
             },
             end_ = {
-                lnum = end_ - 1,
+                lnum = end_ + offset - 1,
                 col = #lines[end_],
             },
         },
     }
 end
 
+---@param values unknown
+---@param offset integer?
 ---@return terminal-diagnostics.parser.ParseResult
-function Parser.create_parse_result(values)
+function Parser.create_parse_result(values, offset)
     local matches = values.matches
+    local _offset = offset or 0
 
     return {
         source = values.source,
@@ -84,11 +87,11 @@ function Parser.create_parse_result(values)
         kind = values.kind,
         range = {
             start = {
-                lnum = matches[1].from.lnum,
+                lnum = matches[1].from.lnum + _offset,
                 col = matches[#matches].from.col,
             },
             end_ = {
-                lnum = matches[1].to.lnum,
+                lnum = matches[1].to.lnum + _offset,
                 col = matches[#matches].to.col,
             },
         },
