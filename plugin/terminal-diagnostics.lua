@@ -48,7 +48,8 @@ end, { nargs = 0, count = 1, bang = true, desc = "Jump to the [count] next error
 
 vim.api.nvim_create_user_command("TermDiagOpen", function(args)
     local open = require("terminal-diagnostics.api").open
-    local open_type = args.fargs[1] or open.OpenType.Split
+    local OpenType = require("terminal-diagnostics.api.open_type")
+    local open_type = args.fargs[1] or OpenType.Split
 
     open.open({ type = open_type })
 end, {
