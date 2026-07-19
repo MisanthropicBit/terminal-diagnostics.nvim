@@ -11,33 +11,33 @@ local parser = command_spec:parser()
 
 local match1 = {
     {
-        match = {
+        {
             from = {
                 col = 0,
                 lnum = 2,
             },
             spec = match_spec,
             submatches = {
-                "/Users/abc/src/types/type_checker.cpp",
-                "85",
-                "39",
+                "/Users/terminal-diagnostics/test-files/target-files/main.cpp",
+                "2",
+                "27",
                 "error",
                 "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
             },
             text =
-            "/Users/abc/src/types/type_checker.cpp:85:39: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+            "/Users/terminal-diagnostics/test-files/target-files/main.cpp:2:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
             to = {
-                col = 142,
+                col = 164,
                 lnum = 2,
             },
         },
-        spec = match_spec,
+
     },
 }
 
 local match2 = {
     {
-        match = {
+        {
             from = {
                 col = 0,
                 lnum = 5,
@@ -57,33 +57,31 @@ local match2 = {
                 lnum = 5,
             },
         },
-        spec = match_spec,
     },
 }
 
 local match3 = {
     {
-        match = {
+        {
             from = {
                 col = 0,
                 lnum = 8,
             },
             spec = match_spec,
             submatches = {
-                "/Users/abc/src/types/type_checker.cpp",
-                "103",
-                "35",
+                "/Users/terminal-diagnostics/test-files/target-files/main.cpp",
+                "7",
+                "27",
                 "error",
                 "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
             },
             text =
-            "/Users/abc/src/types/type_checker.cpp:103:35: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+            "/Users/terminal-diagnostics/test-files/target-files/main.cpp:7:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
             to = {
-                col = 143,
+                col = 164,
                 lnum = 8,
             },
         },
-        spec = match_spec,
     },
 }
 
@@ -91,7 +89,7 @@ local expected_parse_results = { {
     buffer = 0,
     context = {
       lines = {
-          "   85 |                 std::string message = std::format(",
+          "    2 |                 std::string message = std::format(",
           "      |                                       ^    ~~~~~~",
       },
       range = {
@@ -112,16 +110,16 @@ local expected_parse_results = { {
           lnum = 2
         },
         spec = match_spec,
-        submatches = { "/Users/abc/src/types/type_checker.cpp", "85", "39", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
-        text = "/Users/abc/src/types/type_checker.cpp:85:39: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+        submatches = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp", "2", "27", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
+        text = "/Users/terminal-diagnostics/test-files/target-files/main.cpp:2:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
         to = {
-          col = 142,
+          col = 164,
           lnum = 2
         }
       } },
     range = {
       end_ = {
-        col = 142,
+        col = 164,
         lnum = 2
       },
       start = {
@@ -131,10 +129,10 @@ local expected_parse_results = { {
     },
     source = "clang",
     values = {
-      col = 39,
-      lnum = 85,
+      col = 27,
+      lnum = 2,
       message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-      paths = { "/Users/abc/src/types/type_checker.cpp" },
+      paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
       severity = 1
     }
   }, {
@@ -191,7 +189,7 @@ local expected_parse_results = { {
     buffer = 0,
     context = {
       lines = {
-          "  103 |             std::string message = std::format(",
+          "    7 |             std::string message = std::format(",
           "      |                                   ^    ~~~~~~",
       },
       range = {
@@ -212,16 +210,16 @@ local expected_parse_results = { {
           lnum = 8
         },
         spec = match_spec,
-        submatches = { "/Users/abc/src/types/type_checker.cpp", "103", "35", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
-        text = "/Users/abc/src/types/type_checker.cpp:103:35: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+        submatches = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp", "7", "27", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
+        text = "/Users/terminal-diagnostics/test-files/target-files/main.cpp:7:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
         to = {
-          col = 143,
+          col = 164,
           lnum = 8
         }
       } },
     range = {
       end_ = {
-        col = 143,
+        col = 164,
         lnum = 8
       },
       start = {
@@ -231,10 +229,10 @@ local expected_parse_results = { {
     },
     source = "clang",
     values = {
-      col = 35,
-      lnum = 103,
+      col = 27,
+      lnum = 7,
       message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-      paths = { "/Users/abc/src/types/type_checker.cpp" },
+      paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
       severity = 1
     }
   } }
