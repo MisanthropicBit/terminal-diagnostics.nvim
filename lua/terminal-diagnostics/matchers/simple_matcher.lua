@@ -25,7 +25,7 @@ function SimpleMatcher:specs()
 end
 
 ---@param options terminal-diagnostics.MatchOptions
----@return terminal-diagnostics.MatchResult2[]
+---@return terminal-diagnostics.Match[]
 function SimpleMatcher:match(options)
     local match
     local _options = options or {}
@@ -38,13 +38,13 @@ function SimpleMatcher:match(options)
             if match then
                 self.last_match_pos = nil
 
-                return { { spec = spec, match = match } }
+                return { match }
             end
         else
-            match = patterns.find(_options.buffer, spec, count)
+            match = patterns.find(_options.buffer, spec, { count = count })
 
             if match then
-                return { { spec = spec, match = match } }
+                return { match }
             end
         end
     end
@@ -59,7 +59,7 @@ function SimpleMatcher:find_match_start(options)
     local count = options.count or 1
 
     for _, spec in ipairs(self._specs) do
-        pos = patterns.find(options.buffer, spec, count)
+        pos = patterns.find(options.buffer, spec, { count = count })
         self.last_match_pos = pos
 
         if pos then
@@ -78,7 +78,7 @@ function SimpleMatcher:match_at_cursor(options)
         match = patterns.find_at_cursor(options.buffer, spec)
 
         if match then
-            return { { spec = spec, match = match } }
+            return { match }
         end
     end
 
@@ -94,7 +94,7 @@ function SimpleMatcher:extract_values(results)
         )
     end
 
-    return matchers.extract_from_match(results[1].spec, results[1].match)
+    return matchers.extract_from_match(results[1])
 end
 
 return SimpleMatcher

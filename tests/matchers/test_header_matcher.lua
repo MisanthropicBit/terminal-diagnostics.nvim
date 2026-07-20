@@ -1,13 +1,11 @@
 local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
-local err = MiniTest.expect.error
 
 local eslint_stylish_command_spec =
     require("terminal-diagnostics.builtins.eslint-stylish")
 
 local test_matcher = eslint_stylish_command_spec:matcher()
-local header_spec = test_matcher:specs()[1]
-local error_spec = test_matcher:specs()[2]
+local error_spec = test_matcher:specs()[1]
 
 local match = {
     from = {
@@ -15,7 +13,7 @@ local match = {
         lnum = 2,
     },
     submatches = {
-        "./test-files/target-files/foo.js",
+        "/Users/terminal-diagnostics/test-files/target-files/foo.js",
         "1",
         "10",
         "error",
@@ -23,12 +21,12 @@ local match = {
         "no-unused-vars",
     },
     text =
-    "./test-files/target-files/foo.js\n  1:10  error    'addOne' is defined but never used            no-unused-vars",
+    "/Users/terminal-diagnostics/test-files/target-files/foo.js\n  1:10  error    'addOne' is defined but never used            no-unused-vars",
     to = {
         col = 77,
         lnum = 3,
     },
-    spec = header_spec,
+    spec = error_spec,
 }
 
 local T = new_set({
@@ -45,7 +43,7 @@ T["HeaderMatcher"]["match"] = new_set()
 T["HeaderMatcher"]["match"]["finds a match on header with info"] = function()
     local match_result = test_matcher:match({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = header_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["HeaderMatcher"]["match"]["finds a match and uses last match position"] = function()
@@ -54,7 +52,7 @@ T["HeaderMatcher"]["match"]["finds a match and uses last match position"] = func
 
     local match_result = test_matcher:match({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = header_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["HeaderMatcher"]["match"]["finds no match"] = function()
@@ -73,7 +71,7 @@ T["HeaderMatcher"]["match_at_cursor"]["finds a match at cursor"] = function()
     local match_result =
         test_matcher:match_at_cursor({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = header_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["HeaderMatcher"]["match_at_cursor"]["does not find a match at cursor"] = function()

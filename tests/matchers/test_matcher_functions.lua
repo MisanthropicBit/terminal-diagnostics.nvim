@@ -30,7 +30,7 @@ local T = new_set()
 T["matchers"] = new_set()
 
 T["matchers"]["extract_from_match"] = function()
-    local result = matchers.extract_from_match(test_spec, match)
+    local result = matchers.extract_from_match(match)
 
     eq(result, {
         name = "tsc",

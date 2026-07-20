@@ -1,6 +1,10 @@
 -- TODO: Rename to 'search'?
 local patterns = {}
 
+---@class terminal-diagnostics.FindOptions
+---@field count integer?
+---@field wrap  boolean?
+
 ---@alias terminal-diagnostics.SubGroupResult { start_col: integer, end_col: integer }
 
 ---@class terminal-diagnostics.SubgroupParseResult
@@ -10,6 +14,7 @@ local patterns = {}
 ---@field severity terminal-diagnostics.SubGroupResult?
 ---@field message  terminal-diagnostics.SubGroupResult?
 ---@field code     terminal-diagnostics.SubGroupResult?
+
 
 local function keep_cursor(func)
     local cursor = vim.api.nvim_win_get_cursor(0)
@@ -85,19 +90,19 @@ end
 
 --- Find a spec's pattern in a buffer. Does not find matches that the cursor is
 --- already inside of
----@param buffer integer
----@param spec   terminal-diagnostics.MatchSpec
----@param count  integer?
+---@param buffer  integer
+---@param spec    terminal-diagnostics.MatchSpec
+---@param options terminal-diagnostics.FindOptions?
 ---@return terminal-diagnostics.Match?
-function patterns.find(buffer, spec, count)
+function patterns.find(buffer, spec, options)
     local match
-    local _count = count or 1
-    local extra_flags = _count > 0 and "W" or "bW" -- TODO: Make wrap configurable
     local pattern = spec.pattern
+    local _options = vim.tbl_extend("keep", options or {}, { wrap = false, count = 1 })
+    local flags = (_options.count > 0 and "" or "b") .. (_options.wrap and "" or "W")
 
     -- TODO: Does this find something on the same line as a valid pattern
     keep_cursor(function()
-        local first_match = vim.fn.searchpos(pattern, extra_flags)
+        local first_match = vim.fn.searchpos(pattern, flags)
 
         if first_match[1] == 0 and first_match[2] == 0 then
             return

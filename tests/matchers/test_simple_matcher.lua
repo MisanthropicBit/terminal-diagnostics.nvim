@@ -42,7 +42,7 @@ T["SimpleMatcher"]["match"] = new_set()
 T["SimpleMatcher"]["match"]["finds a match"] = function()
     local match_result = test_matcher:match({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = test_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["SimpleMatcher"]["match"]["finds a match and uses last match position"] = function()
@@ -51,7 +51,7 @@ T["SimpleMatcher"]["match"]["finds a match and uses last match position"] = func
 
     local match_result = test_matcher:match({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = test_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["SimpleMatcher"]["match"]["finds no match"] = function()
@@ -70,7 +70,7 @@ T["SimpleMatcher"]["match_at_cursor"]["finds a match at cursor"] = function()
     local match_result =
         test_matcher:match_at_cursor({ buffer = 0, lnum = 1, col = 0, count = 1 })
 
-    eq(match_result, { { spec = test_spec, match = match } })
+    eq(match_result, { match })
 end
 
 T["SimpleMatcher"]["match_at_cursor"]["does not find a match at cursor"] = function()
@@ -85,9 +85,7 @@ end
 T["SimpleMatcher"]["extract_values"] = new_set()
 
 T["SimpleMatcher"]["extract_values"]["extracs values"] = function()
-    local values = test_matcher:extract_values({
-        { match = match, spec = test_spec },
-    })
+    local values = test_matcher:extract_values({ match })
 
     eq(values, {
         code = "2322",
@@ -109,10 +107,7 @@ end
 
 T["SimpleMatcher"]["extract_values"]["fails if too many results"] = function()
     err(function()
-        test_matcher:extract_values({
-            { match = match, spec = test_spec },
-            { match = match, spec = test_spec },
-        })
+        test_matcher:extract_values({ match, match })
     end, "SimpleMatcher:extract_values expected only one result but got '2'")
 end
 

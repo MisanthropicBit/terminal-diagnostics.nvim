@@ -47,7 +47,7 @@ T["patterns/find multiline"] = new_set()
 T["patterns/find multiline"]["finds a match and keeps cursor position"] = function()
     vim.api.nvim_win_set_cursor(0, { 3, 3 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, match2)
     eq(vim.api.nvim_win_get_cursor(0), { 3, 3 })
@@ -56,7 +56,7 @@ end
 T["patterns/find multiline"]["finds no match at the beginning of pattern"] = function()
     vim.api.nvim_win_set_cursor(0, { 12, 0 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, nil)
 end
@@ -64,7 +64,7 @@ end
 T["patterns/find multiline"]["finds no match at the end of pattern"] = function()
     vim.api.nvim_win_set_cursor(0, { 13, 17 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, nil)
 end
@@ -72,7 +72,7 @@ end
 T["patterns/find multiline"]["finds no match"] = function()
     vim.api.nvim_win_set_cursor(0, { 14, 0 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, nil)
 end

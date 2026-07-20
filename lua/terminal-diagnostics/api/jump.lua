@@ -20,7 +20,7 @@ local utils = require("terminal-diagnostics.utils")
 
 ---@class (exact) terminal-diagnostics.ApiResult
 ---@field command_spec terminal-diagnostics.CommandSpec
----@field results      terminal-diagnostics.MatchResult2[]
+---@field results      terminal-diagnostics.Match[]
 
 ---@class terminal-diagnostics.LastJumpLocation
 ---@field match terminal-diagnostics.Match

@@ -11,7 +11,7 @@ local error_spec_pattern = [[(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]
 
 ---@type terminal-diagnostics.MatchSpec
 local header_spec = {
-    pattern = "\\v^((\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n" .. error_spec_pattern,
+    pattern = "\\v^(%(\\/)?%([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n\\s+" .. error_spec_pattern,
     path = 1,
     path_kind = "absolute",
 }

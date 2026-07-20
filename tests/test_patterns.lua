@@ -61,7 +61,7 @@ T["patterns/find"] = new_set()
 T["patterns/find"]["finds a match and keeps cursor position"] = function()
     vim.api.nvim_win_set_cursor(0, { 3, 3 }) -- On the 's' of 'tsc'
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, match1)
     eq(vim.api.nvim_win_get_cursor(0), { 3, 3 })
@@ -70,7 +70,7 @@ end
 T["patterns/find"]["finds no match at the beginning of pattern"] = function()
     vim.api.nvim_win_set_cursor(0, { 4, 1 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, match2)
 end
@@ -78,7 +78,7 @@ end
 T["patterns/find"]["finds no match at the end of pattern"] = function()
     vim.api.nvim_win_set_cursor(0, { 4, 75 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, match2)
 end
@@ -86,7 +86,7 @@ end
 T["patterns/find"]["finds no match"] = function()
     vim.api.nvim_win_set_cursor(0, { 10, 0 })
 
-    local match = patterns.find(0, test_spec, 1)
+    local match = patterns.find(0, test_spec, { count = 1 })
 
     eq(match, nil)
 end

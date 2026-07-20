@@ -21,7 +21,7 @@ function Matcher:specs()
 end
 
 ---@param options terminal-diagnostics.MatchOptions
----@return terminal-diagnostics.MatchResult2[]
+---@return terminal-diagnostics.Match[]
 ---@diagnostic disable-next-line: unused-local
 function Matcher:match(options)
     return {}
@@ -33,7 +33,7 @@ end
 function Matcher:find_match_start(options) end
 
 ---@param options terminal-diagnostics.MatchAtCursorOptions
----@return terminal-diagnostics.MatchResult2[]
+---@return terminal-diagnostics.Match[]
 ---@diagnostic disable-next-line: unused-local
 function Matcher:match_at_cursor(options)
     return {}
@@ -73,7 +73,7 @@ function Matcher.resolve_spec(spec)
     return resolved_spec
 end
 
----@param results terminal-diagnostics.MatchResult2[]
+---@param results terminal-diagnostics.Match[]
 ---@return terminal-diagnostics.MatchResult
 ---@diagnostic disable-next-line: unused-local
 function Matcher:extract_values(results)

@@ -13,14 +13,15 @@ local matchers = {}
 
 --- A spec for how to match an error and what information capture groups contain
 ---@class (exact) terminal-diagnostics.MatchSpec
----@field pattern   string
----@field path      integer?
----@field path_kind ("relative" | "absolute")?
----@field lnum      integer?
----@field col       integer?
----@field severity  (integer | terminal-diagnostics.SeverityResolver)?
----@field code      integer?
----@field message   integer?
+---@field pattern     string
+---@field path        integer?
+---@field path_kind   ("relative" | "absolute")?
+---@field lnum        integer?
+---@field col         integer?
+---@field severity    (integer | terminal-diagnostics.SeverityResolver)?
+---@field code        integer?
+---@field message     integer?
+---@field subpatterns string[]?
 
 ---@class (exact) terminal-diagnostics.ResolvedMatchSpec : terminal-diagnostics.MatchSpec
 ---@field multiline   boolean
@@ -46,10 +47,6 @@ local matchers = {}
 ---@field message  string?
 
 -- TODO: Just embed spec in the match
-
----@class (exact) terminal-diagnostics.MatchResult2
----@field spec terminal-diagnostics.MatchSpec
----@field match terminal-diagnostics.Match
 
 ---@class terminal-diagnostics.MatchAtCursorOptions
 ---@field buffer integer
@@ -133,11 +130,11 @@ local function resolve_severity(severity)
     return "INFO"
 end
 
----@param match_spec terminal-diagnostics.MatchSpec
 ---@param match terminal-diagnostics.Match
 ---@return terminal-diagnostics.MatchResult
-function matchers.extract_from_match(match_spec, match)
+function matchers.extract_from_match(match)
     local submatches = match.submatches
+    local match_spec = match.spec
 
     -- TODO: Allow all keys to support a function for full control
     return {
