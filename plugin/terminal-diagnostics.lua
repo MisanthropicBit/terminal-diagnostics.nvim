@@ -98,12 +98,13 @@ vim.api.nvim_create_user_command("TermDiagSelect", function(args)
     end
 
     require("terminal-diagnostics.api").select.select({
-        lookahead = false,
+        lookahead = args.bang,
         outer = select_type == "outer" and true or false,
         field = select_field
     })
 end, {
     nargs = "+",
+    bang = true,
     complete = function()
         return { "inner", "outer" }
     end,
