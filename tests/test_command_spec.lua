@@ -11,13 +11,10 @@ local T = new_set()
 T["CommandSpec"] = new_set()
 
 T["CommandSpec"]["creates a new command spec with default parser"] = function()
-    local command_spec = CommandSpec.new("test", CommandSpec.CommandKind.Build, matcher, {
-        has_context = true,
-    })
+    local command_spec = CommandSpec.new("test", CommandSpec.CommandKind.Build, matcher)
 
     eq(command_spec:name(), "test")
     eq(command_spec:kind(), CommandSpec.CommandKind.Build)
-    eq(command_spec:has_context(), true)
     eq(command_spec:matcher(), matcher)
     neq(command_spec:parser(), nil)
 end

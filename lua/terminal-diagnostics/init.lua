@@ -48,9 +48,26 @@ function terminal_diagnostics.setup(user_config)
     end
 end
 
-
+---@param options terminal-diagnostics.JumpOptions?
+---@return terminal-diagnostics.ApiResult?
+function terminal_diagnostics.jump(options)
+    return require("terminal-diagnostics.api.jump").jump(options)
 end
 
-terminal_diagnostics.api = require("terminal-diagnostics.api")
+---@param buffer integer
+---@return terminal-diagnostics.ApiResult?
+function terminal_diagnostics.find_at_cursor(buffer)
+    return require("terminal-diagnostics.api.cursor").find_at_cursor(buffer)
+end
+
+---@param options terminal-diagnostics.OpenOptions
+function terminal_diagnostics.open(options)
+    require("terminal-diagnostics.api.open").open(options)
+end
+
+---@param options terminal-diagnostics.SelectOptions?
+function terminal_diagnostics.select(options)
+    require("terminal-diagnostics.api.select").select(options)
+end
 
 return terminal_diagnostics

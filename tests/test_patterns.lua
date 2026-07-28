@@ -167,21 +167,37 @@ T["patterns/find_at_line"]["finds no match"] = function()
 end
 
 -- TODO: Test multiline regexes
--- T["patterns/parse_subgroup"] = new_set()
---
--- T["patterns/parse_subgroup"]["parses tsc subgroups"] = function()
---     local result = patterns.parse_subgroups(positive_match1.text[1], test_spec)
---
---     eq(result, {
---         path = { start_col = 0, end_col = 7 },
---         lnum = { start_col = 8, end_col = 9 },
---         col = { start_col = 10, end_col = 12 },
---         severity = { start_col = 15, end_col = 20 },
---         code = { start_col = 21, end_col = 27 },
---         message = { start_col = 29, end_col = 76 },
---     })
--- end
---
+T["patterns/parse_subgroup"] = new_set()
+
+T["patterns/parse_subgroup"]["parses single line subgroups"] = function()
+    local result = patterns.parse_subgroups(match1.text, test_spec)
+
+    eq(result, {
+        path = { start_col = 0, end_col = 7 },
+        lnum = { start_col = 8, end_col = 9 },
+        col = { start_col = 10, end_col = 12 },
+        severity = { start_col = 15, end_col = 20 },
+        code = { start_col = 23, end_col = 27 },
+        message = { start_col = 29, end_col = 76 },
+    })
+end
+
+T["patterns/parse_subgroup"]["parses multiline subgroups"] = function()
+    local result = patterns.parse_subgroups(
+        [[error[E0000]: main error message
+  --> file.rs:14:5]],
+        require("terminal-diagnostics.builtins.rustc"):matcher():specs()[1]
+    )
+
+    eq(result, {
+        path = { start_col = 6, end_col = 12 },
+        lnum = { start_col = 8, end_col = 9 },
+        col = { start_col = 10, end_col = 12 },
+        severity = { start_col = 15, end_col = 20 },
+        code = { start_col = 23, end_col = 27 },
+        message = { start_col = 29, end_col = 76 },
+    })
+end
 -- T["patterns/parse_subgroup"]["parses jest subgroups"] = function()
 --     local jest_match = "at Object.toEqual (src/fail-throws-synchronous.test.js:10:19)"
 --     local jest_spec = require("terminal-diagnostics.builtins.jest"):matcher():specs()[2]
