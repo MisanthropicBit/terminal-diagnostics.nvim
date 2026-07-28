@@ -51,5 +51,5 @@ return CommandSpec.new(
     "tsc",
     CommandSpec.CommandKind.Build,
     matcher,
-    { has_context = true }
+    { parser = parser }
 )
