@@ -39,7 +39,7 @@ function cursor.find_at_cursor(buffer)
             if #results > 0 then
                 result = {
                     command_spec = command_spec,
-                    results = results,
+                    matches = results,
                 }
 
                 break

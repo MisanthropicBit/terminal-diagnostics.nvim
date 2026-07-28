@@ -4,7 +4,7 @@ local api_utils = {}
 ---@return terminal-diagnostics.parser.ParseResult?
 function api_utils.get_single_parse_result_with_context(api_result)
     local parse_results = api_result.command_spec:parser():parse_buffer(0, {
-        offset = api_result.results[1].from.lnum,
+        offset = api_result.matches[1].from.lnum + 1,
         count = 1,
     })
 

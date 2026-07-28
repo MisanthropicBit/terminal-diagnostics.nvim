@@ -20,7 +20,7 @@ local utils = require("terminal-diagnostics.utils")
 
 ---@class (exact) terminal-diagnostics.ApiResult
 ---@field command_spec terminal-diagnostics.CommandSpec
----@field results      terminal-diagnostics.Match[]
+---@field matches      terminal-diagnostics.Match[]
 
 ---@class terminal-diagnostics.LastJumpLocation
 ---@field match terminal-diagnostics.Match
@@ -130,7 +130,7 @@ function jump.jump(options)
     if #results > 0 then
         last_jump_result = {
             command_spec = closest.command_spec,
-            results = results,
+            matches = results,
         }
     end
 
