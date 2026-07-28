@@ -83,18 +83,20 @@ function diagnostics.from_parse_results(parse_results)
         local buffer = 0
 
         -- TODO: How to handle multiple valid paths?
-        if parse_result.paths[1] then
-            buffer = vim.uri_to_bufnr(vim.uri_from_fname(parse_result.paths[1]))
+        if parse_result.values.paths[1] then
+            buffer = vim.uri_to_bufnr(vim.uri_from_fname(parse_result.values.paths[1]))
         end
 
         local diagnostic = diagnostics.create({
             bufnr = buffer,
-            lnum = parse_result.lnum - 1,
-            col = parse_result.col - 1,
-            severity = parse_result.severity,
-            message = parse_result.message,
+            lnum = parse_result.values.lnum - 1,
+            col = parse_result.values.col - 1,
+            end_lnum = 0, -- TODO:
+            end_col = 0, -- TODO:
+            severity = vim.diagnostic.severity[parse_result.values.severity],
+            message = parse_result.values.message,
             source = parse_result.source,
-            code = parse_result.code,
+            code = parse_result.values.code,
             valid = buffer ~= nil,
         })
 
@@ -110,6 +112,10 @@ function diagnostics.terminal_from_parse_results(parse_results)
     local terminal_diagnostics = {}
 
     for _, parse_result in ipairs(parse_results) do
+        if not parse_result.values then
+            goto continue
+        end
+
         local severity = parse_result.values.severity or "info"
         local code = parse_result.values.code
 
@@ -119,20 +125,19 @@ function diagnostics.terminal_from_parse_results(parse_results)
 
         local diagnostic = diagnostics.create({
             bufnr = parse_result.buffer,
-            lnum = parse_result.range.start.lnum,
-            end_lnum = parse_result.range.end_.lnum,
+            lnum = parse_result.range.start.lnum + 1,
+            end_lnum = parse_result.context.range.end_.lnum + 1,
             col = parse_result.range.start.col,
             end_col = parse_result.range.end_.col,
-            severity = severity,
-            message = ("%s %s"):format(
-                parse_result.kind,
-                severity
-            ),
+            severity = vim.diagnostic.severity[severity],
+            message = ("%s %s"):format(parse_result.kind, severity:lower()),
             source = parse_result.source,
             code = code,
         })
 
         table.insert(terminal_diagnostics, diagnostic)
+
+        :: continue ::
     end
 
     return terminal_diagnostics
