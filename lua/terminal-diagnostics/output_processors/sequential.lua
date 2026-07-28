@@ -1,3 +1,4 @@
+---@class terminal-diagnostics.SequentialOutputProcessor : terminal-diagnostics.OutputProcessor
 local SequentialOutputProcessor = {}
 
 local builtins = require("terminal-diagnostics.builtins")
@@ -52,17 +53,26 @@ function SequentialOutputProcessor.new()
     return setmetatable({}, SequentialOutputProcessor)
 end
 
+function SequentialOutputProcessor:start()
+end
+
+function SequentialOutputProcessor:stop()
+end
+
+function SequentialOutputProcessor:running()
+    return true
+end
+
 ---@param event   terminal-diagnostics.TerminalOutputEvent
 ---@param options terminal-diagnostics.SequentialOutputProcessorOptions?
-function SequentialOutputProcessor.process(event, options)
+function SequentialOutputProcessor:process(event, options)
     local _options = options or {}
 
     if not _options.terminal_diagnostics and not _options.diagnostics and not _options.quickfix then
         return
     end
 
-    local input = event.input
-    local output = event.output
+    local input, output = event.input, event.output
 
     -- 1. Attempt to guess the output format from the input command. Otherwise
     --    loop through all builtin command specs and find ones that have a match
@@ -75,9 +85,15 @@ function SequentialOutputProcessor.process(event, options)
     -- 2. Parse output using all command specs
     local parse_results = {}
     local start_lnum = event.output_pos and event.output_pos.start.lnum or 0
+    local extract = (_options.locationlist
+            or _options.quickfix
+            or _options.trouble
+            or _options.terminal_diagnostics) and true or false
+
+    ---@type terminal-diagnostics.ParseOptions
     local parse_options = {
         offset = start_lnum,
-        context = options,
+        extract = extract,
     }
 
     -- log.timing.start("sequential.parse_results")
@@ -102,6 +118,8 @@ function SequentialOutputProcessor.process(event, options)
         notify.error("Unexpectedly found no results when parsing output")
         return
     end
+
+    -- TODO: Resolve parse results that occupy the same lines
 
     -- 3. Create terminal diagnostics from parse results
     if _options.terminal_diagnostics then
