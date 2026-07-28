@@ -5,12 +5,16 @@ local notify = require("terminal-diagnostics.notify")
 local config_loaded = false
 
 ---@class terminal-diagnostics.Config
+---@field include                 string[]? Command specs to include, excluding all others
+---@field highlight_context_lines boolean?  Highlight context lines when creating terminal diagnostics
+---@field terminal_handler        boolean?  Enable/disable the handler that parses terminal output
+---@field parallel                boolean?  Whether to proceess diagnostics in parallel or not
 
 local default_config = {
-    jump = {
-        prehook = function() end,
-        posthook = function() end,
-    }
+    include = nil,
+    highlight_context_lines = true,
+    terminal_handler = true,
+    parallel = false,
 }
 
 --- Check if a value is a valid string option
@@ -18,14 +22,6 @@ local default_config = {
 ---@return boolean
 function config.valid_string_option(value)
     return value ~= nil and type(value) == "string" and #value > 0
-end
-
-local function is_positive_non_zero_number(value)
-    return type(value) == "number" and value > 0
-end
-
-local function is_non_empty_string(value)
-    return type(value) == "string" and #value > 0
 end
 
 ---@param object table<string, unknown>
@@ -63,12 +59,6 @@ local function validate_schema(object, schema)
     return errors
 end
 
-local expected_non_empty_string = "Expected a non-empty string"
-local non_empty_string_validator = { is_non_empty_string, expected_non_empty_string }
-
-local is_positive_non_zero_number_validator =
-    { is_positive_non_zero_number, "a positive, non-zero number" }
-
 --- Validate a config
 ---@param _config terminal-diagnostics.Config
 ---@return boolean
@@ -77,7 +67,12 @@ function config.validate(_config)
     -- TODO: Validate superfluous keys
 
     -- stylua: ignore start
-    local config_schema = {}
+    local config_schema = {
+        include = string_list_validator,
+        highlight_context_lines = "boolean",
+        terminal_handler = "boolean",
+        parallel = "boolean",
+    }
     -- stylua: ignore end
 
     local errors = validate_schema(_config, config_schema)
