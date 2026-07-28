@@ -10,8 +10,9 @@ local utils = require("terminal-diagnostics.utils")
 -- })
 
 ---@class terminal-diagnostics.JumpOptions
----@field wrap  boolean?
----@field count integer?
+---@field wrap        boolean?
+---@field count       integer?
+---@field keep_cursor boolean?
 
 ---@class terminal-diagnostics.ClosestCommandSpec
 ---@field distance     integer
@@ -62,7 +63,7 @@ end
 ---@param options terminal-diagnostics.JumpOptions?
 ---@return terminal-diagnostics.ApiResult?
 function jump.jump(options)
-    local _options = options or { count = 1, wrap = false }
+    local _options = options or { count = 1, wrap = false, keep_cursor = false }
     local count = _options.count or 1
 
     if count == 0 then
@@ -154,6 +155,10 @@ function jump.jump(options)
     --         augroup = augroup,
     --     })
     -- end
+
+    if _options.keep_cursor then
+        vim.api.nvim_win_set_cursor(0, { lnum, col })
+    end
 
     return {
         command_spec = closest.command_spec,
