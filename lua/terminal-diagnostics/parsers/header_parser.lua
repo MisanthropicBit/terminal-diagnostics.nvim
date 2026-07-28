@@ -22,11 +22,11 @@ function HeaderParser:parse(lines, options)
     local start_marker ---@type integer?
     local specs = self._command_spec:matcher():specs()
     local offset = options and options.offset or 0
-    local extract_match = false
+    local extract_match = options.extract
     local count = 0
     local source = self._command_spec:name()
     local kind = self._command_spec:kind()
-    local has_context = self._command_spec:has_context()
+    local has_context = self._command_spec:parser():has_context()
     local last_header_match
     local header_spec = specs[1]
     local error_spec = specs[2]
@@ -42,12 +42,8 @@ function HeaderParser:parse(lines, options)
             end
 
             if has_context and start_marker then
-                results[#results].context = Parser.create_parse_context(
-                    lines,
-                    offset,
-                    start_marker,
-                    idx
-                )
+                results[#results].context =
+                    Parser.create_parse_context(lines, offset, start_marker, idx)
 
                 count = count + 1
 
@@ -65,12 +61,20 @@ function HeaderParser:parse(lines, options)
 
             if extract_match then
                 parse_result.values = self._command_spec:matcher():extract_values({
-                    { spec = header_spec, match = last_header_match },
-                    { spec = error_spec, match = error_match },
+                    last_header_match,
+                    error_match,
                 })
             end
 
             table.insert(results, parse_result)
+
+            if not has_context then
+                count = count + 1
+
+                if options.count and count == options.count then
+                    break
+                end
+            end
 
             -- Start the match for intermediary error output after the actual error line
             start_marker = idx + 1

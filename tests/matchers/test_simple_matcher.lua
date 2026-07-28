@@ -95,7 +95,7 @@ T["SimpleMatcher"]["extract_values"]["extracs values"] = function()
         paths = {
             "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/test-files/target-files/main.ts",
         },
-        severity = 1,
+        severity = "ERROR",
     })
 end
 

@@ -3,7 +3,7 @@
 ---@class terminal-diagnostics.ParseOptions
 ---@field buffer  integer? The buffer that lines originating from if any
 ---@field offset  integer?
----@field context terminal-diagnostics.ParseContext?
+---@field extract boolean?
 ---@field count   integer?
 
 ---@class terminal-diagnostics.parser.Parser

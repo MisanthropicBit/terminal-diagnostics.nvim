@@ -20,32 +20,15 @@ end
 ---@return terminal-diagnostics.parser.ParseResult[]
 function SimpleParser:parse(lines, options)
     local results = {} ---@type terminal-diagnostics.parser.ParseResult[]
-    -- vim.print(vim.inspect(self))
     local specs = self._command_spec:matcher():specs()
     local _options = options or {}
     local offset = _options.offset or 1
-    local extract_match = false
+    local extract_match = _options.extract
     local count = 0
     local source = self._command_spec:name()
     local kind = self._command_spec:kind()
     local has_context = self:has_context()
-
-    if _options.context then
-        -- TODO: Should this be handled here or in the processors?
-
-        -- Only extract and resolve matches (which may take some time)
-        -- if we are adding the results to some kind of list
-        if
-            _options.context.locationlist
-            or _options.context.quickfix
-            or _options.context.trouble
-        then
-            extract_match = true
-        end
-    end
-
-    extract_match = true
-    local idx = offset
+    local idx = 1
 
     while idx <= #lines do
         for _, spec in ipairs(specs) do
@@ -74,9 +57,7 @@ function SimpleParser:parse(lines, options)
             }, offset - 1)
 
             if extract_match then
-                parse_result.values = self._command_spec:matcher():extract_values({
-                    { spec = spec, match = match },
-                })
+                parse_result.values = self._command_spec:matcher():extract_values({ match })
             end
 
             table.insert(results, parse_result)

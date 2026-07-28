@@ -37,7 +37,7 @@ T["matchers"]["extract_from_match"] = function()
         paths = { vim.fs.abspath(vim.fs.normalize("../test-files/target-files/main.ts")) },
         lnum = tonumber(match.submatches[2]),
         col = tonumber(match.submatches[3]),
-        severity = 1,
+        severity = "ERROR",
         code = match.submatches[5],
         message = match.submatches[6],
     })

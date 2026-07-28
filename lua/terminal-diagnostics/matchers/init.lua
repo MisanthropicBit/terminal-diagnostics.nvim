@@ -1,5 +1,7 @@
 local matchers = {}
 
+---@alias terminal-diagnostics.VimDiagnosticSeverity "ERROR" | "WARN" | "INFO" | "HINT"
+
 ---@generic T: string, integer
 ---@class (exact) terminal-diagnostics.SpecKeyResolver<T>
 ---@field index   integer
@@ -108,23 +110,21 @@ local function resolve_path(path, path_kind)
 end
 
 ---@param severity string
----@return "ERROR" | "WARN" | "INFO" | "HINT"
+---@return terminal-diagnostics.VimDiagnosticSeverity
 local function resolve_severity(severity)
     if not severity then
         return "INFO"
     end
 
-    local uc_severity = severity:upper()
-    local direct_value = vim.diagnostic.severity[uc_severity]
+    local upper_severity = severity:upper()
+    local existing_severity = vim.diagnostic.severity[upper_severity]
 
-    if direct_value then
-        return direct_value
-    end
-
-    if uc_severity == "WARNING" then
-        return vim.diagnostic.severity[2]
-    elseif uc_severity == "CRITICAL" then
-        return vim.diagnostic.severity[1]
+    if existing_severity then
+        return upper_severity
+    elseif upper_severity == "WARNING" then
+        return "WARN"
+    elseif upper_severity == "CRITICAL" then
+        return "ERROR"
     end
 
     return "INFO"
@@ -133,8 +133,8 @@ end
 ---@param match terminal-diagnostics.Match
 ---@return terminal-diagnostics.MatchResult
 function matchers.extract_from_match(match)
-    local submatches = match.submatches
     local match_spec = match.spec
+    local submatches = match.submatches
 
     -- TODO: Allow all keys to support a function for full control
     return {

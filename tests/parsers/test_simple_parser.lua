@@ -1,6 +1,5 @@
 local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
-local err = MiniTest.expect.error
 
 local tsc_command_spec = require("terminal-diagnostics.builtins.tsc")
 
@@ -70,7 +69,7 @@ local expected_parse_results = {
             paths = {
                 "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/test-files/target-files/main.ts",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
     {
@@ -92,7 +91,6 @@ local expected_parse_results = {
                 "",
                 "6     return undefined;",
                 "      ~~~~~~~~~~~~~~~~~",
-                "",
                 "",
             },
             range = {
@@ -136,7 +134,7 @@ local expected_parse_results = {
             paths = {
                 "/Users/hyrule/projects/nvim/terminal-diagnostics.nvim/test-files/target-files/main.ts",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
 }
@@ -156,31 +154,31 @@ T["SimpleParser"] = new_set()
 T["SimpleParser"]["parse"] = new_set()
 
 T["SimpleParser"]["parse"]["parses lines"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, extract = true })
 
     eq(parse_results, expected_parse_results)
 end
 
 T["SimpleParser"]["parse"]["parses lines with offset"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0, offset = 5 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, offset = 5, extract = true })
 
     eq(parse_results, { expected_parse_results[2] })
 end
 
 T["SimpleParser"]["parse"]["parses lines with offset with no results"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0, offset = 10 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, offset = 10, extract = true })
 
     eq(parse_results, {})
 end
 
 T["SimpleParser"]["parse"]["parses lines with count"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0, count = 1 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, count = 1, extract = true })
 
     eq(parse_results, { expected_parse_results[1] })
 end
 
 T["SimpleParser"]["parse"]["parses nothing"] = function()
-    local parse_results = test_parser:parse({}, { buffer = 0 })
+    local parse_results = test_parser:parse({}, { buffer = 0, extract = true })
 
     eq(parse_results, {})
 end
