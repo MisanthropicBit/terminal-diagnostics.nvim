@@ -1,8 +1,9 @@
----@class terminal-diagnostics.UnderlinePosthook
+---@class terminal-diagnostics.UnderlinePosthookOptions
 ---@field hl_group (string | string[])?
 
----@param options terminal-diagnostics.UnderlinePosthook
+---@param options terminal-diagnostics.UnderlinePosthookOptions
 return function(options)
+    ---@param context terminal_diagnostics.PostJumpContext
     return function(context)
         local match = context.match
         local hl_group = options.hl_group or { "Underlined", "ErrorMsg" }
@@ -10,11 +11,11 @@ return function(options)
         local extmark_id = vim.api.nvim_buf_set_extmark(
             context.buffer,
             context.ns,
-            match.from.lnum - 1,
-            match.from.col - 1,
+            match.from.lnum,
+            match.from.col,
             {
                 hl_group = hl_group,
-                end_row = match.to.lnum - 1,
+                end_row = match.to.lnum,
                 end_col = match.to.col,
             }
         )
@@ -25,11 +26,7 @@ return function(options)
                 buffer = context.buffer,
                 once = true,
                 callback = function()
-                    vim.api.nvim_buf_del_extmark(
-                        context.buffer,
-                        context.ns,
-                        extmark_id
-                    )
+                    vim.api.nvim_buf_del_extmark(context.buffer, context.ns, extmark_id)
                 end,
             })
         end)

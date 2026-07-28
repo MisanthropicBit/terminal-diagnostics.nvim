@@ -75,7 +75,7 @@ function jump.jump(options)
     local command_specs = builtins.get()
     local match_options = {
         buffer = buffer,
-        lnum = lnum,
+        lnum = lnum - 1,
         col = col,
         count = count,
         extract = false,
@@ -93,10 +93,10 @@ function jump.jump(options)
             end
 
             if count < 0 then
-                match_options.lnum = vim.fn.line("$")
+                match_options.lnum = vim.fn.line("$") - 1
                 match_options.col = 0
             else
-                match_options.lnum = 1
+                match_options.lnum = 0
                 match_options.col = 0
             end
         else
