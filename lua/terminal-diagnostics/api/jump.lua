@@ -60,6 +60,9 @@ local function get_closest_command_spec(command_specs, match_options)
     return closest_command_spec
 end
 
+-- TODO: Perhaps cache positions and their resulting jump results in a sorted list
+-- for unstable buffers?
+
 ---@param options terminal-diagnostics.JumpOptions?
 ---@return terminal-diagnostics.ApiResult?
 function jump.jump(options)

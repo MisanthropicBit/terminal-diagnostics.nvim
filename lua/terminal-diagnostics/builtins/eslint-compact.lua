@@ -1,6 +1,9 @@
 local CommandSpec = require("terminal-diagnostics.command_spec")
 local SimpleMatcher = require("terminal-diagnostics.matchers.simple_matcher")
 
+-- TODO: Can we optimise jumps when we know that the next line should contain the
+-- error line when the last jump was of the same type?
+
 ---@type terminal-diagnostics.MatchSpec
 local match_spec = {
     pattern = [[\v^(.+):\sline\s(\d+),\scol\s(\d+),\s(Error|Warning|Info)\s-\s(.+)(\s\((.+)\))?$]],

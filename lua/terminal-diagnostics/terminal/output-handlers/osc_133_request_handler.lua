@@ -6,10 +6,17 @@ local Cache = require("terminal-diagnostics.utils.cache")
 local utils = require("terminal-diagnostics.utils")
 
 -- TODO: Parse cmdline_url from MARK_COMMAND_START
+-- TODO: Use vim.api.buf_attach for monitoring for scrollback clears. If the
+-- range that got changed has a lower starting number than the last range then
+-- the screen was probably cleared. Works for <c-l> and printf of the escape
+-- sequence (test also with 'set scrollback=0'). Can we be sure that the screen
+-- got cleared?
 
 ---@class terminal-diagnostics.Position Api-indexed position
 ---@field lnum integer
 ---@field col  integer
+
+-- TODO: Change start and end_ to from and to and unify usages
 
 ---@class terminal-diagnostics.Range Api-indexed range denoted by two positions
 ---@field start terminal-diagnostics.Position
