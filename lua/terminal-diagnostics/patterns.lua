@@ -5,7 +5,11 @@ local patterns = {}
 ---@field count integer?
 ---@field wrap  boolean?
 
----@alias terminal-diagnostics.SubGroupResult { start_col: integer, end_col: integer }
+---@class terminal-diagnostics.SubGroupResult
+---@field start_lnum integer
+---@field start_col  integer
+---@field end_lnum   integer
+---@field end_col    integer
 
 ---@class terminal-diagnostics.SubgroupParseResult
 ---@field path     terminal-diagnostics.SubGroupResult?
@@ -14,7 +18,6 @@ local patterns = {}
 ---@field severity terminal-diagnostics.SubGroupResult?
 ---@field message  terminal-diagnostics.SubGroupResult?
 ---@field code     terminal-diagnostics.SubGroupResult?
-
 
 local function keep_cursor(func)
     local cursor = vim.api.nvim_win_get_cursor(0)
@@ -163,7 +166,6 @@ local function find_at_cursor_multiline(spec, lnum, col)
                 return vim.fn.searchpos(spec.pattern, "cneW")
             end)
 
-
             return start_match, end_match
         end
     end
@@ -289,46 +291,63 @@ end
 --- Parse the subgroups in a pattern and figure out their locations in the
 --- matched string
 ---@param match_string string
----@param spec         terminal-diagnostics.MatchSpec
+---@param spec         terminal-diagnostics.ResolvedMatchSpec
 ---@return terminal-diagnostics.SubgroupParseResult
 function patterns.parse_subgroups(match_string, spec)
     -- NOTE: This is a horrible solution but there is currently no builtin solution
-    -- TODO: Does not work for multiline patterns
-    local idx = 1
     local submatches = {}
-    local pattern = spec.pattern
+    local lines = vim.split(match_string, "\n", { plain = true, trimempty = true })
 
-    repeat
-        -- Find the next unescaped pattern group
-        local _, start_col, end_col = unpack(
-            vim.fn.matchstrpos(pattern, [[\v(\\|\%)@<!\(.{-}(\\|\%)@<!\)]], idx, 1)
-        )
+    assert(#lines == #spec.subpatterns)
 
-        if start_col == -1 then
-            break
-        end
+    for idx = 1, #lines do
+        local offset = 0
+        local line = lines[idx]
+        local subpattern = spec.subpatterns[idx]
 
-        -- Reconstruct the pattern with match markers around the group that we found
-        local subpattern = pattern:sub(1, start_col)
-            .. "\\zs"
-            .. pattern:sub(start_col + 1, end_col)
-            .. "\\ze"
-            .. pattern:sub(end_col + 1)
+        repeat
+            -- Find the next unescaped pattern group
+            local _, start_col, end_col = unpack(
+                vim.fn.matchstrpos(
+                    subpattern,
+                    [[\v(\\|\%)@<!\(.{-}(\\|\%)@<!\)]],
+                    offset,
+                    1
+                )
+            )
 
-        local _, sub_start_col, sub_end_col =
-            unpack(vim.fn.matchstrpos(match_string, subpattern))
+            if start_col == -1 then
+                break
+            end
 
-        table.insert(submatches, { start_col = sub_start_col + 1, end_col = sub_end_col })
+            -- Reconstruct the pattern with match markers around the group that we found
+            local group_pattern = ("%s\\zs%s\\ze%s"):format(
+                subpattern:sub(1, start_col),
+                subpattern:sub(start_col + 1, end_col),
+                subpattern:sub(end_col + 1)
+            )
 
-        idx = end_col + 1
-    until idx > #pattern
+            local _, sub_start_col, sub_end_col =
+                unpack(vim.fn.matchstrpos(line, group_pattern))
+
+            table.insert(submatches, {
+                start_lnum = idx,
+                start_col = sub_start_col,
+                end_lnum = idx,
+                end_col = sub_end_col,
+            })
+
+            offset = end_col + 1
+        until offset > #subpattern
+    end
 
     ---@type terminal-diagnostics.SubgroupParseResult
     local results = {}
-    local subgroups = require("terminal-diagnostics.matchers").match_spec_keys()
+    local matchers = require("terminal-diagnostics.matchers")
+    local spec_keys = matchers.match_spec_keys()
 
-    for _, name in ipairs(subgroups) do
-        local group_idx = spec[name]
+    for _, name in ipairs(spec_keys) do
+        local group_idx = matchers.resolve_spec_index(spec[name])
         local submatch = submatches[group_idx]
 
         if group_idx and submatch then

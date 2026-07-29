@@ -160,6 +160,12 @@ function matchers.spec_has_info(spec)
     return has_info ~= nil
 end
 
+---@param maybe_index integer | terminal-diagnostics.SeverityResolver
+---@return integer
+function matchers.resolve_spec_index(maybe_index)
+    return type(maybe_index) == "number" and maybe_index or maybe_index.index
+end
+
 ---@return string[]
 function matchers.match_spec_keys()
     return { "path", "lnum", "col", "severity", "code", "message" }
