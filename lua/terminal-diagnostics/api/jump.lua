@@ -1,6 +1,6 @@
 local jump = {}
 
-local builtins = require("terminal-diagnostics.builtins")
+local builtins = require("terminal-diagnostics.command_specs")
 local notify = require("terminal-diagnostics.notify")
 local utils = require("terminal-diagnostics.utils")
 

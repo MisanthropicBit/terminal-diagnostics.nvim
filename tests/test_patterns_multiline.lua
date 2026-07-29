@@ -3,7 +3,7 @@ local eq = MiniTest.expect.equality
 
 local patterns = require("terminal-diagnostics.patterns")
 
-local test_spec = require("terminal-diagnostics.builtins.rustc"):matcher():specs()[1]
+local test_spec = require("terminal-diagnostics.command_specs.rustc"):matcher():specs()[1]
 local rustc_test_lines = vim.fn.readfile("./test-files/rustc.txt")
 
 local match1 = {

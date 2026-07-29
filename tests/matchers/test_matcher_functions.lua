@@ -2,7 +2,7 @@ local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
 
 local matchers = require("terminal-diagnostics.matchers")
-local test_spec = require("terminal-diagnostics.builtins.tsc"):matcher():specs()[1]
+local test_spec = require("terminal-diagnostics.command_specs.tsc"):matcher():specs()[1]
 
 local match = {
     text = "main.ts:6:26 - error TS2322: Type 'null' is not assignable to type 'Person'.",

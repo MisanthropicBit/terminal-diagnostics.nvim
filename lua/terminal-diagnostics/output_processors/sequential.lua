@@ -1,7 +1,7 @@
 ---@class terminal-diagnostics.SequentialOutputProcessor : terminal-diagnostics.OutputProcessor
 local SequentialOutputProcessor = {}
 
-local builtins = require("terminal-diagnostics.builtins")
+local builtins = require("terminal-diagnostics.command_specs")
 local diagnostics = require("terminal-diagnostics.diagnostics")
 local guess_command = require("terminal-diagnostics.output_processors.guess_command")
 local log = require("terminal-diagnostics.log")

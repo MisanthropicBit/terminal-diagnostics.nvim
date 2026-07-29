@@ -1,6 +1,6 @@
 local cursor = {}
 
-local builtins = require("terminal-diagnostics.builtins")
+local builtins = require("terminal-diagnostics.command_specs")
 
 ---@param location terminal-diagnostics.ApiResult?
 ---@return boolean

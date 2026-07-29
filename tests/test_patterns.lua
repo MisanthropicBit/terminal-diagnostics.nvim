@@ -3,7 +3,7 @@ local eq = MiniTest.expect.equality
 
 local patterns = require("terminal-diagnostics.patterns")
 
-local test_spec = require("terminal-diagnostics.builtins.tsc"):matcher():specs()[1]
+local test_spec = require("terminal-diagnostics.command_specs.tsc"):matcher():specs()[1]
 local tsc_test_lines = vim.fn.readfile("./test-files/tsc.txt")
 
 local match1 = {

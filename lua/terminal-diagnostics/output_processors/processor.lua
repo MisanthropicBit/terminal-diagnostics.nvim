@@ -1,4 +1,4 @@
-local builtins = require("terminal-diagnostics.builtins")
+local builtin_command_specs = require("terminal-diagnostics.command_specs")
 local guess_command = require("terminal-diagnostics.output_processors.guess_command")
 local log = require("terminal-diagnostics.log")
 local patterns = require("terminal-diagnostics.patterns")
@@ -38,9 +38,9 @@ function OutputProcessor.get_command_specs(input, output)
     if guessed_command_spec then
         command_specs = { guessed_command_spec }
     else
-        local builtin_command_specs = builtins.get()
+        local builtins = builtin_command_specs.get()
 
-        for _, command_spec in ipairs(builtin_command_specs) do
+        for _, command_spec in ipairs(builtins) do
             for _, match_spec in ipairs(command_spec:matcher():specs()) do
                 if match_spec.subpatterns then
                     local lnum = patterns.find_in_lines(output, match_spec)

@@ -2,7 +2,7 @@ local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
 
 local eslint_stylish_command_spec =
-    require("terminal-diagnostics.builtins.eslint-stylish")
+    require("terminal-diagnostics.command_specs.eslint-stylish")
 
 local test_matcher = eslint_stylish_command_spec:matcher()
 local error_spec = test_matcher:specs()[1]

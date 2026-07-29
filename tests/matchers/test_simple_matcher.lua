@@ -2,7 +2,7 @@ local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
 local err = MiniTest.expect.error
 
-local tsc_command_spec = require("terminal-diagnostics.builtins.tsc")
+local tsc_command_spec = require("terminal-diagnostics.command_specs.tsc")
 
 local test_matcher = tsc_command_spec:matcher()
 local test_spec = test_matcher:specs()[1]

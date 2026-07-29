@@ -9,6 +9,10 @@ local error_spec_pattern = [[(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]
 
 -- \\v^(\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+\\s+(\\d+):(\\d+)\\s+(error|warning|info)\\s+(.+)\\s+(.+)?$
 
+-- \\v^((\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$
+
+-- vim.fn.searchpos("\\v^((\\/)?([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n" .. [[(\d+):(\d+)\s+(error|warning|info)\s+(.+)\s+(.+)?$]], "W")
+
 ---@type terminal-diagnostics.MatchSpec
 local header_spec = {
     pattern = "\\v^(%(\\/)?%([.A-Za-z0-9-_]+\\/)+[.A-Za-z0-9-_]+\\.\\w+)\\n\\s+" .. error_spec_pattern,

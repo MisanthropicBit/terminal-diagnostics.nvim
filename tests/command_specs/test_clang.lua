@@ -2,7 +2,7 @@ local new_set = MiniTest.new_set
 local eq, neq = MiniTest.expect.equality, MiniTest.expect.no_equality
 
 local CommandSpec = require("terminal-diagnostics.command_spec")
-local command_spec = require("terminal-diagnostics.builtins.clang")
+local command_spec = require("terminal-diagnostics.command_specs.clang")
 
 local matcher = command_spec:matcher()
 local match_spec = matcher:specs()[1]

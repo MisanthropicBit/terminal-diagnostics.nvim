@@ -8,7 +8,7 @@ function guess_command.guess(command)
     end
 
     if command[1] == "tsc" then
-        return require("terminal-diagnostics.builtins.tsc")
+        return require("terminal-diagnostics.command_specs.tsc")
     elseif command[1] == "npx" then
         return guess_command(vim.list_slice(command, 2))
     end

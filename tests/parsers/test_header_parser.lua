@@ -3,7 +3,7 @@ local eq = MiniTest.expect.equality
 local err = MiniTest.expect.error
 
 local eslint_stylish_command_spec =
-    require("terminal-diagnostics.builtins.eslint-stylish")
+    require("terminal-diagnostics.command_specs.eslint-stylish")
 
 local test_parser = eslint_stylish_command_spec:parser()
 local header_spec = eslint_stylish_command_spec:matcher():specs()[1]
