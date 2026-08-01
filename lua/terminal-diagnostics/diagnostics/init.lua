@@ -1,21 +1,30 @@
 local diagnostics = {}
 
+local SequentialOutputProcessor = require("terminal-diagnostics.output_processors.sequential")
+local ParallelOutputProcessor = require("terminal-diagnostics.output_processors.parallel")
+local notify = require("terminal-diagnostics.notify")
+
 local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
 local processor
+
+-- TODO:
+---@alias terminal-diagnostics.DiagnosticsFilter fun(): boolean
 
 ---@class terminal-diagnostics.QuickfixOptions
 ---@field open  boolean?
 ---@field focus boolean?
 ---@field title string?
 
----@class terminal-diagnostics.DiagnosticsBufferOptions : terminal-diagnostics.SequentialOutputProcessorOptions
-
-local diagnosticToString = {
-    [vim.diagnostic.severity.ERROR] = "error",
-    [vim.diagnostic.severity.WARN] = "warning",
-    [vim.diagnostic.severity.INFO] = "info",
-    [vim.diagnostic.severity.HINT] = "hint",
-}
+---@class terminal-diagnostics.DiagnosticsCreateOptions
+---@field terminal_diagnostics boolean?
+---@field diagnostics          boolean?
+---@field quickfix             (boolean | terminal-diagnostics.QuickfixOptions)?
+---@field locationlist         (boolean | terminal-diagnostics.QuickfixOptions)?
+---@field trouble              boolean?
+---@field parallel             boolean?
+---@field notify               boolean?
+---@field filter               terminal-diagnostics.DiagnosticsFilter?
+---@field stable               boolean? If the buffer is stable and won't be modified
 
 ---@return integer
 function diagnostics.namespace_id()
@@ -39,40 +48,91 @@ function diagnostics.create(diagnostic)
 end
 
 ---@param buffer integer
----@param options terminal-diagnostics.DiagnosticsBufferOptions
+---@param options terminal-diagnostics.DiagnosticsCreateOptions
 function diagnostics.create_for_buffer(buffer, options)
     if not processor then
-        local SequentialOutputProcessor =
-            require("terminal-diagnostics.output_processors.sequential")
-
-        processor = SequentialOutputProcessor.new()
+        if options.parallel then
+            processor = ParallelOutputProcessor.new()
+        else
+            processor = SequentialOutputProcessor.new()
+        end
     end
 
-    processor.process({
+    ---@type terminal-diagnostics.TerminalOutputEvent
+    local event = {
         buffer = buffer,
         input = {},
         output = vim.api.nvim_buf_get_lines(buffer, 0, -1, true),
         has_ansi = false,
-    }, options)
-end
+    }
 
--- { {
---     code = "2322",
---     col = 26,
---     context = { "", "6     return null;", "      ~~~~~~~~~~~~", "", "" },
---     end_ = {
---       col = 76,
---       lnum = 4
---     },
---     lnum = 6,
---     message = "Type 'null' is not assignable to type 'Person'.",
---     path = "main.ts",
---     severity = 1,
---     start = {
---       col = 0,
---       lnum = 4
---     }
---   } }
+    local result = processor:process(event)
+
+    if not result then
+        return
+    end
+
+    -- Create terminal diagnostics from parse results
+    if options.terminal_diagnostics then
+        local terminal_diagnostics = diagnostics.terminal_from_parse_results(result.parse_results)
+
+        diagnostics.set(buffer, terminal_diagnostics, {})
+    end
+
+    local project_diagnostics = {}
+    local populate_list = options.quickfix == true or options.locationlist == true
+
+    -- Create project diagnostics from parse results
+    if options.diagnostics or populate_list then
+        project_diagnostics = diagnostics.from_parse_results(result.parse_results)
+
+        -- TODO: Need to resolve paths to absolute paths and load the buffers
+        -- for those files.
+        --
+        -- Alternatively, set diagnostics for the buffers that are already open
+        -- and cache the rest. When a new buffer is opened, check if the
+        -- filename matches, set diagnostics, and clear cache entry (what if the
+        -- buffer is unloaded and then loaded again?). This is probably better
+        -- since we might otherwise load an enormous amount of buffers
+
+        if #project_diagnostics > 0 then
+            diagnostics.set(0, project_diagnostics, {})
+        end
+    end
+
+    -- Populate the quickfix/location list with the diagnostics
+    if populate_list and #project_diagnostics > 0 then
+        local sources = vim.tbl_map(function(spec)
+            return spec:name()
+        end, result.command_specs)
+
+        if options.quickfix then
+            diagnostics.setqflist(project_diagnostics, {
+                open = true,
+                focus = false,
+                title = ("terminal-diagnostics.nvim (%s)"):format(vim.iter(sources):join(", ")),
+            })
+        end
+
+        if options.locationlist then
+            local win_id = vim.api.nvim_get_current_win()
+
+            vim.fn.setloclist(win_id, {}, " ", {})
+        end
+    end
+
+    -- Notify the user
+    if options.notify then
+        notify.info("Processed terminal output")
+    end
+
+    -- Fire autocommand to signal completion of processor
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "terminal-diagnostics.processor.completed",
+        modeline = false,
+        data = { event = event },
+    })
+end
 
 ---@param parse_results terminal-diagnostics.parser.ParseResult[]
 ---@return vim.Diagnostic[]

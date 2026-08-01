@@ -15,6 +15,9 @@ local default_config = {
     highlight_context_lines = true,
     terminal_handler = true,
     parallel = false,
+    diagnostics = {
+        filter = function() end,
+    }
 }
 
 --- Check if a value is a valid string option

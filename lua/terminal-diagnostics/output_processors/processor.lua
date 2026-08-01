@@ -3,6 +3,10 @@ local guess_command = require("terminal-diagnostics.output_processors.guess_comm
 local log = require("terminal-diagnostics.log")
 local patterns = require("terminal-diagnostics.patterns")
 
+---@class terminal-diagnostics.OutputProcessorResult
+---@field parse_results terminal-diagnostics.parser.ParseResult[]
+---@field command_specs terminal-diagnostics.CommandSpec[]
+
 ---@class terminal-diagnostics.OutputProcessor
 local OutputProcessor = {}
 

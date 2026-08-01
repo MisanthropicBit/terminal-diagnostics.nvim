@@ -2,18 +2,12 @@
 local SequentialOutputProcessor = {}
 
 local builtins = require("terminal-diagnostics.command_specs")
-local diagnostics = require("terminal-diagnostics.diagnostics")
 local guess_command = require("terminal-diagnostics.output_processors.guess_command")
 local log = require("terminal-diagnostics.log")
 local notify = require("terminal-diagnostics.notify")
 local patterns = require("terminal-diagnostics.patterns")
 
 ---@class terminal-diagnostics.SequentialOutputProcessorOptions
----@field terminal_diagnostics boolean?
----@field diagnostics          boolean?
----@field quickfix             (boolean | terminal-diagnostics.QuickfixOptions)?
----@field locationlist         (boolean | terminal-diagnostics.QuickfixOptions)?
----@field trouble              boolean?
 
 -- TODO: Emit autocmd events after processing
 -- TODO: Create clickable links for error codes?
@@ -65,13 +59,9 @@ end
 
 ---@param event   terminal-diagnostics.TerminalOutputEvent
 ---@param options terminal-diagnostics.SequentialOutputProcessorOptions?
+---@return terminal-diagnostics.OutputProcessorResult?
+---@diagnostic disable-next-line: unused-local
 function SequentialOutputProcessor:process(event, options)
-    local _options = options or {}
-
-    if not _options.terminal_diagnostics and not _options.diagnostics and not _options.quickfix then
-        return
-    end
-
     local input, output = event.input, event.output
 
     -- 1. Attempt to guess the output format from the input command. Otherwise
@@ -79,31 +69,28 @@ function SequentialOutputProcessor:process(event, options)
     local command_specs = get_command_specs(input, output)
 
     if #command_specs == 0 then
+        log.debug("No viable command specs found for event", event)
         return
     end
 
     -- 2. Parse output using all command specs
     local parse_results = {}
-    local start_lnum = event.output_pos and event.output_pos.start.lnum or 0
-    local extract = (_options.locationlist
-            or _options.quickfix
-            or _options.trouble
-            or _options.terminal_diagnostics) and true or false
+    local start_lnum = event.output_pos and event.output_pos.from.lnum or 0
 
     ---@type terminal-diagnostics.ParseOptions
     local parse_options = {
         offset = start_lnum,
-        extract = extract,
+        extract = true,
     }
 
-    -- log.timing.start("sequential.parse_results")
+    log.timing.start("sequential.parse_results")
 
     for _, command_spec in ipairs(command_specs) do
         local parser = command_spec:parser()
 
-        -- log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
+        log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
         local _parse_results = parser:parse(output, parse_options)
-        -- log.timing.stop()
+        log.timing.stop()
 
         if #_parse_results == 0 then
             log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
@@ -112,7 +99,7 @@ function SequentialOutputProcessor:process(event, options)
         end
     end
 
-    -- log.timing.stop("sequential.parse_results")
+    log.timing.stop("sequential.parse_results")
 
     if #parse_results == 0 then
         notify.error("Unexpectedly found no results when parsing output")
@@ -121,57 +108,10 @@ function SequentialOutputProcessor:process(event, options)
 
     -- TODO: Resolve parse results that occupy the same lines
 
-    -- 3. Create terminal diagnostics from parse results
-    if _options.terminal_diagnostics then
-        -- log.timing.start("sequential.terminal_diagnostics")
-        local terminal_diagnostics = diagnostics.terminal_from_parse_results(parse_results)
-        -- log.timing.stop()
-
-        diagnostics.set(event.buffer, terminal_diagnostics, {})
-    end
-
-    local populate_list = _options.quickfix ~= nil or _options.locationlist ~= nil
-    local project_diagnostics = {}
-
-    -- 4. Create diagnostics for the project from parse results
-    if _options.diagnostics or populate_list then
-        project_diagnostics = diagnostics.from_parse_results(parse_results)
-
-        -- TODO: Need to resolve paths to absolute paths and load the buffers
-        -- for those files. Alternatively, set diagnostics for the buffers that
-        -- are already open and cache the rest. When a new buffer is opened,
-        -- check if the filename matches, set diagnostics, and clear cache entry
-        -- (what if the buffer is unloaded and then loaded again?)
-        if _options.diagnostics and #project_diagnostics > 0 then
-            diagnostics.set(0, project_diagnostics, {})
-        end
-    end
-
-    -- 4. Populate the quickfix/location list with the diagnostics (let user do this via autocmds?)
-    if populate_list and #project_diagnostics > 0 then
-        -- TODO: Do we add the terminal diagnostics or the ordinary diagnostics
-        -- to the lists?
-        local sources = vim.tbl_map(function(spec)
-            return spec:name()
-        end, command_specs)
-
-        -- TODO: Need the window nr in event for location list
-
-        diagnostics.setqflist(project_diagnostics, {
-            open = true,
-            focus = false,
-            title = ("terminal-diagnostics.nvim (%s)"):format(vim.iter(sources):join(", ")),
-        })
-    end
-
-    -- 5. Optionally notify the user
-    -- notify.info("Processed terminal output")
-
-    -- vim.api.nvim_exec_autocmds("User", {
-    --     pattern = "terminal-diagnostics.processor.completed",
-    --     modeline = false,
-    --     data = { event = event },
-    -- })
+    return {
+        parse_results = parse_results,
+        command_specs = command_specs,
+    }
 end
 
 return SequentialOutputProcessor
