@@ -11,12 +11,12 @@ return function(options)
         local extmark_id = vim.api.nvim_buf_set_extmark(
             context.buffer,
             context.ns,
-            match.from.lnum,
-            match.from.col,
+            match.range.from.lnum,
+            match.range.from.col,
             {
                 hl_group = hl_group,
-                end_row = match.to.lnum,
-                end_col = match.to.col,
+                end_row = match.range.to.lnum,
+                end_col = match.range.to.col,
             }
         )
 

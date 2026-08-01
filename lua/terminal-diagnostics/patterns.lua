@@ -79,13 +79,15 @@ local function create_match(buffer, spec, start_match, end_match)
     return {
         text = text[1],
         submatches = merged_submatches,
-        from = {
-            lnum = start_match[1] - 1,
-            col = start_match[2] - 1,
-        },
-        to = {
-            lnum = end_match[1] - 1,
-            col = end_match[2],
+        range = {
+            from = {
+                lnum = start_match[1] - 1,
+                col = start_match[2] - 1,
+            },
+            to = {
+                lnum = end_match[1] - 1,
+                col = end_match[2],
+            },
         },
         spec = spec,
     }
@@ -282,8 +284,7 @@ function patterns.find_at_line(lines, match_spec, lnum)
     return {
         text = table.concat(text, "\n"),
         submatches = submatches,
-        from = from,
-        to = to,
+        range  = { from = from, to = to },
         spec = match_spec,
     }
 end

@@ -124,18 +124,18 @@ function HeaderMatcher:find_match_start(options)
     if header_match then
         if error_match then
             if count > 0 then
-                if header_match.from.lnum > error_match.from.lnum then
+                if header_match.range.from.lnum > error_match.range.from.lnum then
                     self.last_match_pos = error_match
                     self.last_match_type = "error"
-                elseif header_match.from.lnum < error_match.from.lnum then
+                elseif header_match.range.from.lnum < error_match.range.from.lnum then
                     self.last_match_pos = header_match
                     self.last_match_type = "header"
                 end
             elseif count < 0 then
-                if header_match.from.lnum > error_match.from.lnum then
+                if header_match.range.from.lnum > error_match.range.from.lnum then
                     self.last_match_pos = header_match
                     self.last_match_type = "header"
-                elseif header_match.from.lnum < error_match.from.lnum then
+                elseif header_match.range.from.lnum < error_match.range.from.lnum then
                     self.last_match_pos = error_match
                     self.last_match_type = "error"
                 end

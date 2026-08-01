@@ -90,13 +90,13 @@ local function handle_outer_select(cursor_result, options)
             ---@cast context -nil
 
             return cursor_result, {
-                start = cursor_result.matches[1].from,
-                end_ = context.range.end_,
+                start = cursor_result.matches[1].range.from,
+                end_ = context.range.to,
             }
         else
             return cursor_result, {
-                start = cursor_result.matches[1].from,
-                end_ = cursor_result.matches[1].to,
+                start = cursor_result.matches[1].range.from,
+                end_ = cursor_result.matches[1].range.to,
             }
         end
     end
@@ -122,8 +122,8 @@ local function handle_outer_select(cursor_result, options)
 
             if range.contains(context.range, lnum) then
                 return prev, {
-                    start = parse_result.range.start,
-                    end_ = context.range.end_,
+                    start = parse_result.range.from,
+                    end_ = context.range.to,
                 }
             end
         end
@@ -156,8 +156,8 @@ local function handle_outer_select(cursor_result, options)
 
             if range.contains(context.range, lnum) then
                 return {
-                    start = parse_result.range.start,
-                    end_ = context.range.end_,
+                    start = parse_result.range.from,
+                    end_ = context.range.to,
                 }
             end
         end
@@ -182,11 +182,11 @@ function select.select(options)
         return
     end
 
-    local from, to = result.matches[1].from, result.matches[1].to
+    local from, to = result.matches[1].range.from, result.matches[1].range.to
 
     if _options.outer then
         ---@cast _range -nil
-        from, to = _range.start, _range.end_
+        from, to = _range.from, _range.to
     end
 
     -- if _options.field then

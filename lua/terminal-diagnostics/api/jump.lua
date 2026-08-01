@@ -47,7 +47,7 @@ local function get_closest_command_spec(command_specs, match_options)
         local match = matcher:find_match_start(match_options)
 
         if match then
-            local distance = math.abs(match.from.lnum - match_options.lnum)
+            local distance = math.abs(match.range.from.lnum - match_options.lnum)
 
             if distance ~= 0 and distance < closest_command_spec.distance then
                 closest_command_spec.distance = distance
@@ -76,6 +76,8 @@ function jump.jump(options)
     local buffer = vim.api.nvim_get_current_buf()
     local lnum, col = unpack(utils.cursor.get())
     local command_specs = builtins.get()
+
+    -- TODO: Change lnum and col to a position
     local match_options = {
         buffer = buffer,
         lnum = lnum - 1,
@@ -104,11 +106,11 @@ function jump.jump(options)
             end
         else
             if idx < math.abs(count) then
-                match_options.lnum = closest.match.to.lnum
-                match_options.col = closest.match.to.col
+                match_options.lnum = closest.match.range.to.lnum
+                match_options.col = closest.match.range.to.col
             else
-                match_options.lnum = closest.match.from.lnum
-                match_options.col = closest.match.from.col
+                match_options.lnum = closest.match.range.from.lnum
+                match_options.col = closest.match.range.from.col
             end
 
             idx = idx + 1

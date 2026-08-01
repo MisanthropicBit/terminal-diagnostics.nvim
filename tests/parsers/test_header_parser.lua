@@ -72,13 +72,15 @@ local expected_parse_results = {
                     "'addOne' is defined but never used           ",
                     "no-unused-vars",
                 },
-                from = {
-                    lnum = 3,
-                    col = 0,
-                },
-                to = {
-                    lnum = 3,
-                    col = 77,
+                range = {
+                    from = {
+                        lnum = 3,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 3,
+                        col = 77,
+                    },
                 },
                 text = "  1:10  error    'addOne' is defined but never used            no-unused-vars",
                 spec = error_spec,
@@ -119,13 +121,15 @@ local expected_parse_results = {
                     "Use the isNaN function to compare with NaN   ",
                     "use-isnan",
                 },
-                from = {
-                    lnum = 4,
-                    col = 0,
-                },
-                to = {
-                    lnum = 4,
-                    col = 72,
+                range = {
+                    from = {
+                        lnum = 4,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 4,
+                        col = 72,
+                    },
                 },
                 text = "  2:9   error    Use the isNaN function to compare with NaN    use-isnan",
                 spec = error_spec,
@@ -166,13 +170,15 @@ local expected_parse_results = {
                     "Unexpected space before unary operator '++'  ",
                     "space-unary-ops",
                 },
-                from = {
-                    lnum = 5,
-                    col = 0,
-                },
-                to = {
-                    lnum = 5,
-                    col = 78,
+                range = {
+                    from = {
+                        lnum = 5,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 5,
+                        col = 78,
+                    },
                 },
                 text = "  3:16  error    Unexpected space before unary operator '++'   space-unary-ops",
                 spec = error_spec,
@@ -213,13 +219,15 @@ local expected_parse_results = {
                     "Missing semicolon                            ",
                     "semi",
                 },
-                from = {
-                    lnum = 6,
-                    col = 0,
-                },
-                to = {
-                    lnum = 6,
-                    col = 67,
+                range = {
+                    from = {
+                        lnum = 6,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 6,
+                        col = 67,
+                    },
                 },
                 text = "  3:20  warning  Missing semicolon                             semi",
                 spec = error_spec,
@@ -260,13 +268,15 @@ local expected_parse_results = {
                     "Unnecessary 'else' after 'return'            ",
                     "no-else-return",
                 },
-                from = {
-                    lnum = 7,
-                    col = 0,
-                },
-                to = {
-                    lnum = 7,
-                    col = 77,
+                range = {
+                    from = {
+                        lnum = 7,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 7,
+                        col = 77,
+                    },
                 },
                 text = "  4:12  warning  Unnecessary 'else' after 'return'             no-else-return",
                 spec = error_spec,
@@ -307,13 +317,15 @@ local expected_parse_results = {
                     "Expected indentation of 8 spaces but found 6 ",
                     "indent",
                 },
-                from = {
-                    lnum = 8,
-                    col = 0,
-                },
-                to = {
-                    lnum = 8,
-                    col = 69,
+                range = {
+                    from = {
+                        lnum = 8,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 8,
+                        col = 69,
+                    },
                 },
                 text = "  5:1   warning  Expected indentation of 8 spaces but found 6  indent",
                 spec = error_spec,
@@ -354,13 +366,15 @@ local expected_parse_results = {
                     "Function 'addOne' expected a return value    ",
                     "consistent-return",
                 },
-                from = {
-                    lnum = 9,
-                    col = 0,
-                },
-                to = {
-                    lnum = 9,
-                    col = 80,
+                range = {
+                    from = {
+                        lnum = 9,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 9,
+                        col = 80,
+                    },
                 },
                 text = "  5:7   error    Function 'addOne' expected a return value     consistent-return",
                 spec = error_spec,
@@ -401,13 +415,15 @@ local expected_parse_results = {
                     "Missing semicolon                            ",
                     "semi",
                 },
-                from = {
-                    lnum = 10,
-                    col = 0,
-                },
-                to = {
-                    lnum = 10,
-                    col = 67,
+                range = {
+                    from = {
+                        lnum = 10,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 10,
+                        col = 67,
+                    },
                 },
                 text = "  5:13  warning  Missing semicolon                             semi",
                 spec = error_spec,

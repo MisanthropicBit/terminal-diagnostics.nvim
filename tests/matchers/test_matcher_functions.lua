@@ -14,13 +14,15 @@ local match = {
         "2322",
         "Type 'null' is not assignable to type 'Person'.",
     },
-    from = {
-        lnum = 3,
-        col = 0,
-    },
-    to = {
-        lnum = 3,
-        col = 76,
+    range = {
+        from = {
+            lnum = 3,
+            col = 0,
+        },
+        to = {
+            lnum = 3,
+            col = 76,
+        },
     },
     spec = test_spec,
 }

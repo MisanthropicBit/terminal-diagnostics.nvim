@@ -16,13 +16,15 @@ local match1 = {
         "2322",
         "Type 'null' is not assignable to type 'Person'.",
     },
-    from = {
-        lnum = 3,
-        col = 0,
-    },
-    to = {
-        lnum = 3,
-        col = 76,
+    range = {
+        from = {
+            lnum = 3,
+            col = 0,
+        },
+        to = {
+            lnum = 3,
+            col = 76,
+        },
     },
     spec = test_spec,
 }
@@ -37,13 +39,15 @@ local match2 = {
         "2322",
         "Type 'undefined' is not assignable to type 'Person'.",
     },
-    from = {
-        lnum = 8,
-        col = 0,
-    },
-    to = {
-        lnum = 8,
-        col = 81,
+    range = {
+        from = {
+            lnum = 8,
+            col = 0,
+        },
+        to = {
+            lnum = 8,
+            col = 81,
+        },
     },
     spec = test_spec,
 }

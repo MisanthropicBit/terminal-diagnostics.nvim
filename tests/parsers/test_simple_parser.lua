@@ -49,13 +49,15 @@ local expected_parse_results = {
                     "2322",
                     "Type 'null' is not assignable to type 'Person'.",
                 },
-                from = {
-                    lnum = 3,
-                    col = 0,
-                },
-                to = {
-                    lnum = 3,
-                    col = 76,
+                range = {
+                    from = {
+                        lnum = 3,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 3,
+                        col = 76,
+                    },
                 },
                 text = "main.ts:6:26 - error TS2322: Type 'null' is not assignable to type 'Person'.",
                 spec = test_spec,
@@ -114,13 +116,15 @@ local expected_parse_results = {
                     "2322",
                     "Type 'undefined' is not assignable to type 'Person'.",
                 },
-                from = {
-                    lnum = 8,
-                    col = 0,
-                },
-                to = {
-                    lnum = 8,
-                    col = 81,
+                range = {
+                    from = {
+                        lnum = 8,
+                        col = 0,
+                    },
+                    to = {
+                        lnum = 8,
+                        col = 81,
+                    },
                 },
                 text = "main.ts:7:27 - error TS2322: Type 'undefined' is not assignable to type 'Person'.",
                 spec = test_spec,

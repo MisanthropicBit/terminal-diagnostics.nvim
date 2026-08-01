@@ -8,9 +8,15 @@ local test_matcher = eslint_stylish_command_spec:matcher()
 local error_spec = test_matcher:specs()[1]
 
 local match = {
-    from = {
-        col = 0,
-        lnum = 2,
+    range = {
+        from = {
+            col = 0,
+            lnum = 2,
+        },
+        to = {
+            col = 77,
+            lnum = 3,
+        },
     },
     submatches = {
         "/Users/terminal-diagnostics/test-files/target-files/foo.js",
@@ -22,10 +28,6 @@ local match = {
     },
     text =
     "/Users/terminal-diagnostics/test-files/target-files/foo.js\n  1:10  error    'addOne' is defined but never used            no-unused-vars",
-    to = {
-        col = 77,
-        lnum = 3,
-    },
     spec = error_spec,
 }
 

@@ -9,13 +9,15 @@ local rustc_test_lines = vim.fn.readfile("./test-files/rustc.txt")
 local match1 = {
     text = "error[E0000]: main error message\n  --> file.rs:14:5",
     submatches = { "error", "E0000", "main error message", "file.rs", "14", "5" },
-    from = {
-        lnum = 2,
-        col = 0,
-    },
-    to = {
-        lnum = 3,
-        col = 18,
+    range = {
+        from = {
+            lnum = 2,
+            col = 0,
+        },
+        to = {
+            lnum = 3,
+            col = 18,
+        },
     },
     spec = test_spec,
 }
@@ -23,13 +25,15 @@ local match1 = {
 local match2 = {
     text = "note: sub-diagnostic message for `.span_note`\n  --> file.rs:10:4",
     submatches = { "note", "", "sub-diagnostic message for `.span_note`", "file.rs", "10", "4" },
-    from = {
-        lnum = 11,
-        col = 0,
-    },
-    to = {
-        lnum = 12,
-        col = 18,
+    range = {
+        from = {
+            lnum = 11,
+            col = 0,
+        },
+        to = {
+            lnum = 12,
+            col = 18,
+        },
     },
     spec = test_spec,
 }

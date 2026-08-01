@@ -16,11 +16,9 @@ local utils = require("terminal-diagnostics.utils")
 ---@field lnum integer
 ---@field col  integer
 
--- TODO: Change start and end_ to from and to and unify usages
-
 ---@class terminal-diagnostics.Range Api-indexed range denoted by two positions
----@field start terminal-diagnostics.Position
----@field end_  terminal-diagnostics.Position
+---@field from terminal-diagnostics.Position
+---@field to   terminal-diagnostics.Position
 
 ---@class terminal-diagnostics.TerminalBufferCacheEntry
 ---@field buffer       integer
@@ -110,12 +108,12 @@ local terminal_buffer_cache = Cache.new(nil, {
 ---@param region terminal-diagnostics.Range
 ---@return string[]
 local function get_buf_text_region(buffer, region)
-    if not region.start or not region.end_ then
+    if not region.from or not region.to then
         return {}
     end
 
-    local start_lnum, start_col = region.start.lnum, region.start.col
-    local end_lnum, end_col = region.end_.lnum, region.end_.col
+    local start_lnum, start_col = region.from.lnum, region.from.col
+    local end_lnum, end_col = region.to.lnum, region.to.col
 
     return vim.api.nvim_buf_get_text(
         buffer,
@@ -183,7 +181,7 @@ function handler.start(callback)
                 local entry = terminal_buffer_cache:get(buffer)
 
                 -- Only dispatch if we have output data
-                if entry.output_pos.start then
+                if entry.output_pos.from then
                     dispatch_event(buffer, entry, callback)
                     terminal_buffer_cache:remove(buffer)
                 end
@@ -197,11 +195,11 @@ function handler.start(callback)
                 -- emits command markers, this will be overwritten by the command start
                 -- marker
                 if not has_command_markers then
-                    entry.output_pos.start = { lnum = lnum + 1, col = col }
+                    entry.output_pos.from = { lnum = lnum + 1, col = col }
                 end
 
                 -- Save the prompt end as the start of user input
-                entry.input_pos.start = { lnum = lnum, col = col + 1 }
+                entry.input_pos.from = { lnum = lnum, col = col + 1 }
                 -- terminal_buffer_cache:set(buffer, entry)
             elseif matches_marker(sequence, MARK_COMMAND_START) then
                 has_command_markers = true
@@ -209,7 +207,7 @@ function handler.start(callback)
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
 
-                entry.output_pos.start = { lnum = lnum, col = col }
+                entry.output_pos.from = { lnum = lnum, col = col }
                 -- terminal_buffer_cache:set(buffer, entry)
 
                 local command_line = parse_command_start_marker(sequence)
@@ -222,7 +220,7 @@ function handler.start(callback)
                 -- If we have prompt markers, save the start of the command
                 -- output as the end of user ipnut
                 if has_prompt_markers then
-                    entry.input_pos.end_ = { lnum = lnum, col = col - 1 }
+                    entry.input_pos.to = { lnum = lnum, col = col - 1 }
                 end
             elseif matches_marker(sequence, MARK_COMMAND_END) then
                 has_command_markers = true
@@ -231,7 +229,7 @@ function handler.start(callback)
                 local entry = terminal_buffer_cache:get(buffer)
 
                 entry.exit_code = parse_command_end_marker(sequence)
-                entry.output_pos.end_ = { lnum = lnum, col = col }
+                entry.output_pos.to = { lnum = lnum, col = col }
             end
         end,
     })

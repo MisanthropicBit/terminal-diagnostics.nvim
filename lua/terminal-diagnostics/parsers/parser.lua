@@ -87,12 +87,12 @@ function Parser.create_parse_result(values, offset)
         kind = values.kind,
         range = {
             start = {
-                lnum = matches[1].from.lnum + _offset,
-                col = matches[#matches].from.col,
+                lnum = matches[1].range.from.lnum + _offset,
+                col = matches[#matches].range.from.col,
             },
             end_ = {
-                lnum = matches[1].to.lnum + _offset,
-                col = matches[#matches].to.col,
+                lnum = matches[1].range.to.lnum + _offset,
+                col = matches[#matches].range.to.col,
             },
         },
         matches = matches,

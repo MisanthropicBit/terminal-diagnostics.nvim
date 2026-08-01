@@ -34,8 +34,7 @@ local matchers = {}
 ---@class terminal-diagnostics.Match
 ---@field text       string
 ---@field submatches string[]
----@field from       terminal-diagnostics.Position
----@field to         terminal-diagnostics.Position
+---@field range      terminal-diagnostics.Range
 ---@field spec       terminal-diagnostics.MatchSpec
 
 --- The contextual data extracted from a match using a match spec

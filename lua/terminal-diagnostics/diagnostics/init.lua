@@ -125,10 +125,10 @@ function diagnostics.terminal_from_parse_results(parse_results)
 
         local diagnostic = diagnostics.create({
             bufnr = parse_result.buffer,
-            lnum = parse_result.range.start.lnum + 1,
-            end_lnum = parse_result.context.range.end_.lnum + 1,
-            col = parse_result.range.start.col,
-            end_col = parse_result.range.end_.col,
+            lnum = parse_result.range.from.lnum + 1,
+            end_lnum = parse_result.context.range.to.lnum + 1,
+            col = parse_result.range.from.col,
+            end_col = parse_result.range.to.col,
             severity = vim.diagnostic.severity[severity],
             message = ("%s %s"):format(parse_result.kind, severity:lower()),
             source = parse_result.source,

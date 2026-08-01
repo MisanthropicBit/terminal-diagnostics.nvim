@@ -261,7 +261,7 @@ function ParallelProcessor:process(event, options)
 
     local input, output = event.input, event.output
     local command_specs = self.get_command_specs(input, output)
-    local start_lnum = event.output_pos and event.output_pos.start.lnum or 0
+    local start_lnum = event.output_pos and event.output_pos.from.lnum or 0
     local extract = (_options.locationlist
             or _options.quickfix
             or _options.trouble

@@ -17,7 +17,7 @@ return function(options)
                     vim.api.nvim_buf_set_extmark(
                         context.buffer,
                         context.ns,
-                        match.from.lnum - 1,
+                        match.range.from.lnum - 1,
                         pos.start_col - 1,
                         {
                             hl_group = hl_group,
