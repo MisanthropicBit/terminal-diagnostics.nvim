@@ -23,7 +23,7 @@ function builtins.get(filter)
     -- Many of the patterns were borrowed and modified from
     -- stevearc/overseer.nvim and ej-shafran/compile-mode.nvim
     return vim.tbl_map(function(name)
-        return require("terminal-diagnostics.builtins." .. name)
+        return require("terminal-diagnostics.command_specs." .. name)
     end, names)
 end
 
