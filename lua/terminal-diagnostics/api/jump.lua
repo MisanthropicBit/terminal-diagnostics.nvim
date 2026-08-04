@@ -140,26 +140,23 @@ function jump.jump(options)
         }
     end
 
-    -- vim.api.nvim_exec_autocmds("User", {
-    --     pattern = "TerminalDiagnosticsPostJump",
-    --     modeline = false,
-    --     data = {
-    --         command_spec = closest.command_spec,
-    --         buffer = buffer,
-    --         ns = ns,
-    --         augroup = augroup,
-    --     },
-    -- })
-
-    -- if config.jump.posthook then
-    --     config.jump.posthook({
-    --         match = match,
-    --         data = data,
-    --         buffer = buffer,
-    --         ns = ns,
-    --         augroup = augroup,
-    --     })
-    -- end
+    vim.api.nvim_exec_autocmds("User", {
+        pattern = "TerminalDiagnosticsPostJump",
+        modeline = false,
+        data = {
+            command_spec = closest.command_spec,
+            buffer = buffer,
+            ns = ns,
+            augroup = augroup,
+            groups = function()
+                return require("terminal-diagnostics.patterns").parse_subgroups(
+                    closest.match.text,
+                    ---@diagnostic disable-next-line: param-type-mismatch
+                    closest.match.spec
+                )
+            end,
+        },
+    })
 
     if _options.keep_cursor then
         vim.api.nvim_win_set_cursor(0, { lnum, col })
