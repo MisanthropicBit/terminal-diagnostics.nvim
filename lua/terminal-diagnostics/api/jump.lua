@@ -164,7 +164,7 @@ function jump.jump(options)
 
     return {
         command_spec = closest.command_spec,
-        results = results,
+        matches = results,
     }
 end
 

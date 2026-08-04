@@ -62,11 +62,11 @@ function Parser.create_parse_context(lines, offset, start, end_)
     return {
         lines = context_lines,
         range = {
-            start = {
+            from = {
                 lnum = start + offset - 1,
                 col = 0,
             },
-            end_ = {
+            to = {
                 lnum = end_ + offset - 1,
                 col = #lines[end_],
             },
@@ -86,11 +86,11 @@ function Parser.create_parse_result(values, offset)
         buffer = values.buffer,
         kind = values.kind,
         range = {
-            start = {
+            from = {
                 lnum = matches[1].range.from.lnum + _offset,
                 col = matches[#matches].range.from.col,
             },
-            end_ = {
+            to = {
                 lnum = matches[1].range.to.lnum + _offset,
                 col = matches[#matches].range.to.col,
             },
