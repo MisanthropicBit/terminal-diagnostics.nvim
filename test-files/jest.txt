@@ -1,6 +1,6 @@
 
 
-FAIL src/fail-throws-synchronous.test.js
+FAIL test-files/target-files/test.ts
   ✕ should throw if passed true (9ms)
 
   ● should throw if passed true
@@ -18,7 +18,9 @@ FAIL src/fail-throws-synchronous.test.js
       12 | });
       13 |
 
-      at Object.toEqual (src/fail-throws-synchronous.test.js:10:19)
+      at Object.toEqual (test-files/target-files/test.ts:10:19)
+      at Object.toEqual (test-files/target-files/test.ts:12:1)
+      at Object.toEqual (test-files/target-files/test.ts:14:3)
 
 Test Suites: 1 failed, 1 total
 Tests:       1 failed, 1 total

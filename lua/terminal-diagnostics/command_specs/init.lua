@@ -5,6 +5,7 @@ local builtin_command_specs = {
     "clang",
     "eslint-compact",
     "eslint-stylish",
+    "jest",
     "rustc",
     "tsc",
 }

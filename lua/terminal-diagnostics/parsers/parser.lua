@@ -8,7 +8,6 @@
 
 ---@class terminal-diagnostics.parser.Parser
 ---@field _command_spec   terminal-diagnostics.CommandSpec
----@field is_context_line (fun(self: terminal-diagnostics.parser.Parser, line: string): boolean)?
 local Parser = {}
 
 Parser.__index = Parser
@@ -110,6 +109,14 @@ function Parser:extend(mixin)
     for method_name, impl in pairs(mixin) do
         self[method_name] = impl
     end
+end
+
+---@param line string
+---@param spec terminal-diagnostics.MatchSpec
+---@return boolean
+---@diagnostic disable-next-line: unused-local
+function Parser:is_context_line(line, spec)
+    return false
 end
 
 return Parser

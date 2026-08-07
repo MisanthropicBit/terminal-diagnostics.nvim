@@ -9,7 +9,7 @@ local matchers = {}
 
 ---@class (exact) terminal-diagnostics.SeverityResolver
 ---@field index   integer
----@field resolve fun(severity: string): vim.diagnostic.Severity
+---@field resolve fun(severity: string): terminal-diagnostics.VimDiagnosticSeverity
 
 -- TODO: Add support for end_lnum and end_col
 

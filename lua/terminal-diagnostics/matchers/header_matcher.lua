@@ -38,7 +38,8 @@ function HeaderMatcher:match(options)
     local count = options.count or 1
 
     if self.last_match_pos then
-        local spec = self.last_match_type == "header" and self.header_spec or self.error_spec
+        local spec = self.last_match_type == "header" and self.header_spec
+            or self.error_spec
         local match = patterns.find_at_cursor(buffer, spec)
 
         if match then
@@ -47,12 +48,6 @@ function HeaderMatcher:match(options)
 
             return { match }
         end
-    end
-
-    local cursor_result = self:match_at_cursor({ buffer = buffer })
-
-    if #cursor_result > 0 then
-        return cursor_result
     end
 
     local results = {}
@@ -74,7 +69,8 @@ function HeaderMatcher:match_upwards(options)
         patterns.find(options.buffer, self.error_spec, { count = options.count })
 
     if error_match then
-        local header_match = patterns.find(options.buffer, self.header_spec, { count = -1 })
+        local header_match =
+            patterns.find(options.buffer, self.header_spec, { count = -1 })
 
         if header_match then
             return { error_match, header_match }
@@ -95,7 +91,7 @@ function HeaderMatcher:match_downwards(options)
         return { header_match }
     end
 
-    local error_match = patterns.find(options.buffer, self.error_spec, { count = 1})
+    local error_match = patterns.find(options.buffer, self.error_spec, { count = 1 })
 
     if error_match then
         local results = {}
@@ -121,6 +117,7 @@ function HeaderMatcher:find_match_start(options)
     local header_match = patterns.find(buffer, self.header_spec, { count = count })
     local error_match = patterns.find(buffer, self.error_spec, { count = count })
 
+    -- TODO: Use range module for comparison
     if header_match then
         if error_match then
             if count > 0 then
