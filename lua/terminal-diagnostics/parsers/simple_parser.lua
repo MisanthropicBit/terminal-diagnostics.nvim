@@ -77,20 +77,15 @@ function SimpleParser:parse(lines, options)
                         prev_idx,
                         idx - 1
                     )
-
-                    count = count + 1
-
-                    if _options.count and count == _options.count then
-                        break
-                    end
                 end
             else
                 idx = idx + 1
-                count = count + 1
+            end
 
-                if _options.count and count == _options.count then
-                    break
-                end
+            count = count + 1
+
+            if _options.count and count == _options.count then
+                break
             end
 
             ::continue::
