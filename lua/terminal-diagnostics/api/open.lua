@@ -52,6 +52,36 @@ local function open_match(type, result, path)
     end
 end
 
+---@param lnum integer
+---@return terminal-diagnostics.ApiResult?
+local function find_previous_result(lnum)
+    -- If there is no result at the cursor try finding a previous match and see
+    -- if the cursor is on some context line
+    local prev = require("terminal-diagnostics.api.jump").jump({
+        count = -1,
+        wrap = false,
+        keep_cursor = true,
+    })
+
+    if prev then
+        if not prev.command_spec:parser():has_context() then
+            return
+        end
+
+        local api_utils = require("terminal-diagnostics.api.api_utils")
+        local parse_result = api_utils.get_single_parse_result_with_context(prev)
+
+        if parse_result then
+            local context = parse_result.context
+            ---@cast context -nil
+
+            if range.contains(context.range, lnum) then
+                return prev
+            end
+        end
+    end
+end
+
 ---@param options terminal-diagnostics.OpenOptions
 function open.open(options)
     local buffer = vim.api.nvim_get_current_buf()
@@ -61,29 +91,7 @@ function open.open(options)
     -- If there is no result at the cursor try finding a previous match and see
     -- if the cursor is on some context line
     if not result then
-        local prev = require("terminal-diagnostics.api.jump").jump({
-            count = -1,
-            wrap = false,
-            keep_cursor = true,
-        })
-
-        if prev then
-            if not prev.command_spec:parser():has_context() then
-                return
-            end
-
-            local api_utils = require("terminal-diagnostics.api.api_utils")
-            local parse_result = api_utils.get_single_parse_result_with_context(prev)
-
-            if parse_result then
-                local context = parse_result.context
-                ---@cast context -nil
-
-                if range.contains(context.range, lnum) then
-                    result = prev
-                end
-            end
-        end
+        result = find_previous_result(lnum)
     end
 
     if not result then
