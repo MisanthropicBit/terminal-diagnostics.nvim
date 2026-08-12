@@ -35,6 +35,7 @@ end
 ---@protected
 ---@param input  string[]?
 ---@param output string[]
+---@return terminal-diagnostics.CommandSpec[]
 function OutputProcessor.get_command_specs(input, output)
     local command_specs = {}
     local guessed_command_spec = guess_command.guess(input)
