@@ -86,7 +86,7 @@ Logger.__index = Logger
 ---@return vim.log.levels
 function log.default_level()
     if not default_log_level then
-        local env_log_level = vim.fn.getenv("terminal-diagnostics_LOG_LEVEL") ~= nil
+        local env_log_level = vim.fn.getenv("TERMINAL_DIAGNOSTICS_LOG_LEVEL") ~= nil
 
         if type(env_log_level) == "string" then
             local level_name = vim.log.levels[env_log_level:upper()]
@@ -156,7 +156,7 @@ function Logger:log(level_name, ...)
     end
 
     local info = debug.getinfo(4, "Sl")
-    local fileinfo = ("%s:%s"):format(info.short_src, info.currentline)
+    local fileinfo = ("%s:%s"):format(info.source:sub(1), info.currentline)
     local parts = {
         table.concat({
             level_name,
