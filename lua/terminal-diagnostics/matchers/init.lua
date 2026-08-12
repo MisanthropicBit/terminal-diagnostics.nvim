@@ -24,6 +24,7 @@ local matchers = {}
 ---@field code        integer?
 ---@field message     integer?
 ---@field subpatterns string[]?
+---@field consecutive boolean?
 
 ---@class (exact) terminal-diagnostics.ResolvedMatchSpec : terminal-diagnostics.MatchSpec
 ---@field multiline   boolean

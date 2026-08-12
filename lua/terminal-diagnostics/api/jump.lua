@@ -60,6 +60,31 @@ local function get_closest_command_spec(command_specs, match_options)
     return closest_command_spec
 end
 
+--- Find a consecutive match if the last jump result was consecutive
+--- (possibly has a match on the next line)
+---comment
+---@param match         terminal-diagnostics.Match
+---@param command_spec  terminal-diagnostics.CommandSpec
+---@param match_options table
+---@return terminal-diagnostics.ClosestCommandSpec?
+local function find_consecutive_match(match, command_spec, match_options)
+    if not match.spec.consecutive then
+        return
+    end
+
+    local matcher = command_spec:matcher()
+    local next_match = matcher:find_match_start(match_options)
+
+    -- We matched the next line with the same command spec
+    if next_match and next_match.range.from.lnum == match.range.from.lnum + 1 then
+        return {
+            distance = 1,
+            match = match,
+            command_spec = command_spec,
+        }
+    end
+end
+
 -- TODO: Perhaps cache positions and their resulting jump results in a sorted list
 -- for unstable buffers?
 
@@ -85,12 +110,26 @@ function jump.jump(options)
         count = count,
         extract = false,
     }
-    ---@type terminal-diagnostics.ClosestCommandSpec
+    ---@type terminal-diagnostics.ClosestCommandSpec?
     local closest
     local idx = 1
 
+    if last_jump_result then
+        closest = find_consecutive_match(
+            last_jump_result.matches[1],
+            last_jump_result.command_spec,
+            match_options
+        )
+    end
+
     while idx <= math.abs(count) do
-        closest = get_closest_command_spec(command_specs, match_options)
+        if closest then
+            closest = find_consecutive_match(closest.match, closest.command_spec, match_options)
+        end
+
+        if not closest then
+            closest = get_closest_command_spec(command_specs, match_options)
+        end
 
         if not closest.command_spec then
             if not _options.wrap then
@@ -118,6 +157,8 @@ function jump.jump(options)
 
         vim.api.nvim_win_set_cursor(0, { match_options.lnum + 1, match_options.col })
     end
+
+    ---@cast closest -nil
 
     if not closest.command_spec then
         -- Reset cursor to original position
