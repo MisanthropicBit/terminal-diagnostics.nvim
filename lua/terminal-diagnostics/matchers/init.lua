@@ -92,19 +92,24 @@ local function resolve_path(path, path_kind)
         return
     end
 
-    if not path_kind or path_kind == "relative" then
-        -- TODO: Slow for large repos, can we perhaps cache results or
-        -- check in relation to the project root?
-        local paths = vim.fs.find(path, {
-            limit = math.huge,
-            upward = false,
-            type = "file",
-            -- path = "", TODO: Should be the project root
-        })
-
-        return paths
-    elseif path_kind == "absolute" then
+    if path_kind == "absolute" then
         return { path }
+    elseif not path_kind or path_kind == "relative" then
+        local cwd = vim.fn.getcwd()
+        local rel_path = vim.fn.fnamemodify(("%s/%s"):format(cwd, path), ":p")
+
+        return { rel_path }
+
+        -- -- TODO: Slow for large repos, can we perhaps cache results or
+        -- -- check in relation to the project root?
+        -- local paths = vim.fs.find(path, {
+        --     limit = math.huge,
+        --     upward = false,
+        --     type = "file",
+        --     -- path = "", TODO: Should be the project root
+        -- })
+        --
+        -- return paths
     end
 end
 
