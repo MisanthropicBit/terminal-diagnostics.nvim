@@ -7,7 +7,7 @@
 ---@field error terminal-diagnostics.NotifyFunc
 local notify = {}
 
--- local log = require("terminal-diagnostics.log")
+local log = require("terminal-diagnostics.log")
 
 local supported_levels = {
     debug = vim.log.levels.DEBUG,
@@ -44,10 +44,10 @@ for name, level in pairs(supported_levels) do
 
     notify[name] = notify_func
 
-    -- notify.log[name] = function(message, ...)
-    --     notify_func(message, ...)
-    --     log[name](message, ...)
-    -- end
+    notify.log[name] = function(message, ...)
+        notify_func(message, ...)
+        log[name](message, ...)
+    end
 end
 
 return notify
