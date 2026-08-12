@@ -87,10 +87,11 @@ function SequentialOutputProcessor:process(event, options)
 
     for _, command_spec in ipairs(command_specs) do
         local parser = command_spec:parser()
+        local timing_name = ("sequential.parse_results.%s"):format(command_spec:name())
 
-        log.timing.start(("sequential.parse_results.%s"):format(command_spec:name()))
+        log.timing.start(timing_name)
         local _parse_results = parser:parse(output, parse_options)
-        log.timing.stop()
+        log.timing.stop(timing_name)
 
         if #_parse_results == 0 then
             log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
