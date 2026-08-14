@@ -1,9 +1,10 @@
----@type terminal-diagnostics.OutputHandler
+---@type terminal-diagnostics.TerminalRequestHandler
 ---@diagnostic disable-next-line: missing-fields
 local handler = {}
 
 local Cache = require("terminal-diagnostics.utils.cache")
 local utils = require("terminal-diagnostics.utils")
+local terminal = require("terminal-diagnostics.terminal")
 
 -- TODO: Parse cmdline_url from MARK_COMMAND_START
 -- TODO: Use vim.api.buf_attach for monitoring for scrollback clears. If the
@@ -12,28 +13,22 @@ local utils = require("terminal-diagnostics.utils")
 -- sequence (test also with 'set scrollback=0'). Can we be sure that the screen
 -- got cleared?
 
----@class terminal-diagnostics.Position Api-indexed position
----@field lnum integer
----@field col  integer
-
----@class terminal-diagnostics.Range Api-indexed range denoted by two positions
----@field from terminal-diagnostics.Position
----@field to   terminal-diagnostics.Position
-
 ---@class terminal-diagnostics.TerminalBufferCacheEntry
 ---@field buffer       integer
----@field input_pos    terminal-diagnostics.Range?
----@field output_pos   terminal-diagnostics.Range?
+---@field input_range  terminal-diagnostics.Range?
+---@field output_range terminal-diagnostics.Range?
 ---@field command_line string[]?
 ---@field exit_code    integer?
 
-local OSC_133 = "\027]133;"
+local ESC = "\027"
+local OSC_133 = ESC .. "]133;"
 local MARK_PROMPT_START = OSC_133 .. "A"
 local MARK_PROMPT_END = OSC_133 .. "B"
 local MARK_COMMAND_START = OSC_133 .. "C"
 local MARK_COMMAND_END = OSC_133 .. "D"
+local CWD = ESC .. "]7;"
 
-local autocmd_handler_id
+local autocmd_id
 
 -- TODO: Probably doesn't work if multiple shells are used in the same session
 local has_prompt_markers = false
@@ -76,14 +71,28 @@ end
 ---@param marker string
 ---@return integer?
 local function parse_command_end_marker(marker)
-    local tail =
-        vim.iter(vim.gsplit(marker, ";", { plain = true })):skip(2):totable()
+    local tail = vim.iter(vim.gsplit(marker, ";", { plain = true })):skip(2):totable()
 
     if not tail then
         return
     end
 
     return tonumber(table.concat(tail, ""))
+end
+
+---@param sequence string
+---@return string?
+local function parse_cwd_sequence(sequence)
+    local tail = vim.iter(vim.gsplit(sequence, ";", { plain = true })):skip(2)
+
+    if not tail:peek() then
+        return
+    end
+
+    -- Skip 'file://' at start and '\027\\' at end
+    local rest = tail:join(""):sub(8):sub(1, -3)
+
+    return rest
 end
 
 --- Check if an escape sequence matches a prompt or command marker
@@ -115,64 +124,43 @@ local function get_buf_text_region(buffer, region)
     local start_lnum, start_col = region.from.lnum, region.from.col
     local end_lnum, end_col = region.to.lnum, region.to.col
 
-    return vim.api.nvim_buf_get_text(
-        buffer,
-        start_lnum,
-        start_col,
-        end_lnum,
-        end_col,
-        {}
-    )
+    return vim.api.nvim_buf_get_text(buffer, start_lnum, start_col, end_lnum, end_col, {})
 end
 
---- Dispatch a terminal input/output event
----@param entry    terminal-diagnostics.TerminalBufferCacheEntry
----@param callback terminal-diagnostics.OutputHandlerCallback
-local function dispatch_event(buffer, entry, callback)
-    local output = get_buf_text_region(buffer, entry.output_pos)
+---@param buffer integer
+---@param entry terminal-diagnostics.TerminalBufferCacheEntry
+---@return terminal-diagnostics.TerminalRequestOutputEvent?
+local function create_output_event(buffer, entry)
+    local output = get_buf_text_region(buffer, entry.output_range)
 
     -- If there is no output, there are no diagnostics to generate
     if #output == 0 then
         return
     end
 
-    -- local has_ansi = false
-    --
-    -- for _, line in ipairs(output) do
-    --     if line:match("TODO: ANSI PATTERN") then
-    --         has_ansi = true
-    --         break
-    --     end
-    -- end
+    local input = entry.command_line or get_buf_text_region(buffer, entry.input_range)
 
-    local input = entry.command_line or get_buf_text_region(buffer, entry.input_pos)
-
-    callback({
+    return {
         buffer = buffer,
+        type = terminal.TerminalEventType.OutputEvent,
         input = input,
-        input_pos = entry.input_pos,
+        input_range = entry.input_range,
         output = output,
-        output_pos = entry.output_pos,
+        output_range = entry.output_range,
         exit_code = entry.exit_code,
         has_ansi = false,
-    })
+    }
 end
 
 function handler.start(callback)
     -- TODO: Use vim.startswith since sequences can contain more than just the
     -- sequence itself
 
-    autocmd_handler_id = vim.api.nvim_create_autocmd("TermRequest", {
+    autocmd_id = vim.api.nvim_create_autocmd("TermRequest", {
         callback = function(event)
             local buffer = event.buf
             local sequence = event.data.sequence
             local lnum, col = unpack(event.data.cursor)
-
-            -- vim.print(vim.inspect({ sequence, lnum, col }))
-
-            -- A, C, D
-            -- vim.print(sequence)
-            -- vim.print(matches_marker(sequence, MARK_PROMPT_START))
 
             if matches_marker(sequence, MARK_PROMPT_START) then
                 has_prompt_markers = true
@@ -181,9 +169,13 @@ function handler.start(callback)
                 local entry = terminal_buffer_cache:get(buffer)
 
                 -- Only dispatch if we have output data
-                if entry.output_pos.from then
-                    dispatch_event(buffer, entry, callback)
-                    terminal_buffer_cache:remove(buffer)
+                if entry.output_range.from then
+                    local term_request_event = create_output_event(buffer, entry)
+
+                    if term_request_event then
+                        callback(term_request_event)
+                        terminal_buffer_cache:remove(buffer)
+                    end
                 end
             elseif matches_marker(sequence, MARK_PROMPT_END) then
                 has_prompt_markers = true
@@ -195,11 +187,11 @@ function handler.start(callback)
                 -- emits command markers, this will be overwritten by the command start
                 -- marker
                 if not has_command_markers then
-                    entry.output_pos.from = { lnum = lnum + 1, col = col }
+                    entry.output_range.from = { lnum = lnum + 1, col = col }
                 end
 
                 -- Save the prompt end as the start of user input
-                entry.input_pos.from = { lnum = lnum, col = col + 1 }
+                entry.input_range.from = { lnum = lnum, col = col + 1 }
                 -- terminal_buffer_cache:set(buffer, entry)
             elseif matches_marker(sequence, MARK_COMMAND_START) then
                 has_command_markers = true
@@ -207,7 +199,7 @@ function handler.start(callback)
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
 
-                entry.output_pos.from = { lnum = lnum, col = col }
+                entry.output_range.from = { lnum = lnum, col = col }
                 -- terminal_buffer_cache:set(buffer, entry)
 
                 local command_line = parse_command_start_marker(sequence)
@@ -220,7 +212,7 @@ function handler.start(callback)
                 -- If we have prompt markers, save the start of the command
                 -- output as the end of user ipnut
                 if has_prompt_markers then
-                    entry.input_pos.to = { lnum = lnum, col = col - 1 }
+                    entry.input_range.to = { lnum = lnum, col = col - 1 }
                 end
             elseif matches_marker(sequence, MARK_COMMAND_END) then
                 has_command_markers = true
@@ -229,18 +221,28 @@ function handler.start(callback)
                 local entry = terminal_buffer_cache:get(buffer)
 
                 entry.exit_code = parse_command_end_marker(sequence)
-                entry.output_pos.to = { lnum = lnum, col = col }
+                entry.output_range.to = { lnum = lnum, col = col }
+            elseif matches_marker(sequence, CWD) then
+                local directory = parse_cwd_sequence(sequence)
+
+                if directory then
+                    callback({
+                        buffer = buffer,
+                        type = terminal.TerminalEventType.DirectoryEvent,
+                        directory = directory
+                    })
+                end
             end
         end,
     })
 end
 
 function handler.stop()
-    if not autocmd_handler_id then
-        return
+    if not autocmd_id then
+        error("Cannot stop terminal request handler as it was not started")
     end
 
-    vim.api.nvim_del_autocmd(autocmd_handler_id)
+    vim.api.nvim_del_autocmd(autocmd_id)
 end
 
 return handler
