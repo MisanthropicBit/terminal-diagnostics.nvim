@@ -1,5 +1,13 @@
 local range = {}
 
+---@class terminal-diagnostics.Position Api-indexed position
+---@field lnum integer
+---@field col  integer
+
+---@class terminal-diagnostics.Range Api-indexed range denoted by two positions
+---@field from terminal-diagnostics.Position
+---@field to   terminal-diagnostics.Position
+
 ---@param _range terminal-diagnostics.Range
 ---@param lnum integer
 ---@return boolean

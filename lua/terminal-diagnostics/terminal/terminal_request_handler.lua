@@ -14,11 +14,11 @@ local terminal = require("terminal-diagnostics.terminal")
 -- got cleared?
 
 ---@class terminal-diagnostics.TerminalBufferCacheEntry
----@field buffer       integer
----@field input_range  terminal-diagnostics.Range?
----@field output_range terminal-diagnostics.Range?
----@field command_line string[]?
----@field exit_code    integer?
+---@field buffer        integer
+---@field input_range   terminal-diagnostics.Range?
+---@field output_range  terminal-diagnostics.Range?
+---@field command_line  string[]?
+---@field exit_code     integer?
 
 local ESC = "\027"
 local OSC_133 = ESC .. "]133;"
@@ -107,8 +107,8 @@ local terminal_buffer_cache = Cache.new(nil, {
     default = function()
         return {
             buffer = -1,
-            input_pos = { value = nil, start = nil, end_ = nil },
-            output_pos = { start = nil, end_ = nil },
+            input_range = { value = nil, start = nil, end_ = nil },
+            output_range = { start = nil, end_ = nil },
         }
     end,
 })
@@ -170,10 +170,10 @@ function handler.start(callback)
 
                 -- Only dispatch if we have output data
                 if entry.output_range.from then
-                    local term_request_event = create_output_event(buffer, entry)
+                    local output_event = create_output_event(buffer, entry)
 
-                    if term_request_event then
-                        callback(term_request_event)
+                    if output_event then
+                        callback(output_event)
                         terminal_buffer_cache:remove(buffer)
                     end
                 end
@@ -210,7 +210,7 @@ function handler.start(callback)
                 end
 
                 -- If we have prompt markers, save the start of the command
-                -- output as the end of user ipnut
+                -- output as the end of user input
                 if has_prompt_markers then
                     entry.input_range.to = { lnum = lnum, col = col - 1 }
                 end
