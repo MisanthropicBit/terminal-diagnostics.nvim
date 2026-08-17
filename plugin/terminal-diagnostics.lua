@@ -110,3 +110,12 @@ end, {
     end,
     desc = "Visually select the error under cursor",
 })
+
+vim.api.nvim_create_user_command("TermDiagLog", function(args)
+    local log_path = require("terminal-diagnostics.log").default_logger():path()
+
+    vim.cmd(("%s split %s"):format(args.mods, log_path))
+end, {
+    nargs = 0,
+    desc = "Open the log file for the default logger",
+})
