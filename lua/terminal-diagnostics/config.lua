@@ -1,23 +1,37 @@
+---@type terminal-diagnostics.Config
+---@diagnostic disable-next-line: missing-fields
 local config = {}
 
 local notify = require("terminal-diagnostics.notify")
 
 local config_loaded = false
 
+---@class terminal-diagnostics.ConfigTerminalDiagnostics
+---@field create_options terminal-diagnostics.DiagnosticsCreateOptions
+
+---@class terminal-diagnostics.ConfigTerminalOptions
+---@field enabled     boolean?
+---@field diagnostics terminal-diagnostics.ConfigTerminalDiagnostics
+
 ---@class terminal-diagnostics.Config
 ---@field include                 string[]? Command specs to include, excluding all others
 ---@field highlight_context_lines boolean?  Highlight context lines when creating terminal diagnostics
----@field terminal_handler        boolean?  Enable/disable the handler that parses terminal output
 ---@field parallel                boolean?  Whether to proceess diagnostics in parallel or not
+---@field terminal                terminal-diagnostics.ConfigTerminalOptions
 
 local default_config = {
     include = nil,
     highlight_context_lines = true,
-    terminal_handler = true,
     parallel = false,
     diagnostics = {
         filter = function() end,
-    }
+    },
+    terminal = {
+        enabled = true,
+        diagnostics = {
+            create_options = {},
+        },
+    },
 }
 
 --- Check if a value is a valid string option
@@ -73,7 +87,6 @@ function config.validate(_config)
     local config_schema = {
         include = string_list_validator,
         highlight_context_lines = "boolean",
-        terminal_handler = "boolean",
         parallel = "boolean",
     }
     -- stylua: ignore end
