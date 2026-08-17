@@ -1,12 +1,10 @@
 local diagnostics = {}
 
-local SequentialOutputProcessor =
-    require("terminal-diagnostics.output_processors.sequential")
-local ParallelOutputProcessor = require("terminal-diagnostics.output_processors.parallel")
+local processor = require("terminal-diagnostics.processor")
+local terminal = require("terminal-diagnostics.terminal")
 -- local buffer_cache = require("terminal-diagnostics.buffer_cache.buffer_cache")
 
 local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
-local processor
 
 -- TODO:
 ---@alias terminal-diagnostics.DiagnosticsFilter fun(): boolean
@@ -106,85 +104,85 @@ local function set_project_diagnostics(project_diagnostics)
     return project_diagnostics
 end
 
+---@param event   terminal-diagnostics.TerminalRequestOutputEvent
+---@param options terminal-diagnostics.DiagnosticsCreateOptions
+function diagnostics.create_for_event(event, options)
+    processor.process(event, function(result)
+        ---@cast result terminal-diagnostics.OutputProcessorResult
+        if not result then
+            return
+        end
+
+        -- Create terminal diagnostics from parse results
+        if options.terminal_diagnostics then
+            local terminal_diagnostics =
+                diagnostics.from_terminal_parse_results(result.parse_results)
+
+            diagnostics.set(event.buffer, terminal_diagnostics, {})
+
+            -- if options.stable or is_stable_buffer(buffer) then
+            --     buffer_cache.set(buffer, result.parse_results)
+            -- end
+        end
+
+        local project_diagnostics = {}
+        local populate_list = options.quickfix == true or options.locationlist == true
+
+        -- Create project diagnostics from parse results
+        if options.diagnostics or populate_list then
+            project_diagnostics = diagnostics.from_parse_results(result.parse_results)
+
+            if options.diagnostics then
+                set_project_diagnostics(project_diagnostics)
+            end
+        end
+
+        -- Populate the quickfix/location list with the diagnostics
+        if populate_list and #project_diagnostics > 0 then
+            local sources = vim.tbl_map(function(spec)
+                return spec:name()
+            end, result.command_specs)
+
+            if options.quickfix then
+                diagnostics.setqflist(project_diagnostics, {
+                    open = true,
+                    focus = false,
+                    title = ("terminal-diagnostics.nvim (%s)"):format(
+                        vim.iter(sources):join(", ")
+                    ),
+                })
+            end
+
+            if options.locationlist then
+                local win_id = vim.api.nvim_get_current_win()
+
+                vim.fn.setloclist(win_id, {}, " ", {})
+            end
+
+            if options.trouble then
+                local has_trouble, _ = pcall(require, "trouble")
+
+                if has_trouble then
+                    vim.cmd("Trouble qflist open")
+                end
+            end
+        end
+    end, { parallel = options.parallel })
+end
+
 ---@param buffer integer
 ---@param options terminal-diagnostics.DiagnosticsCreateOptions
 function diagnostics.create_for_buffer(buffer, options)
-    if not processor then
-        if options.parallel then
-            processor = ParallelOutputProcessor.new()
-        else
-            processor = SequentialOutputProcessor.new()
-        end
-    end
-
-    ---@type terminal-diagnostics.TerminalOutputEvent
+    ---@type terminal-diagnostics.TerminalRequestOutputEvent
     local event = {
         buffer = buffer,
+        type = terminal.TerminalEventType.OutputEvent,
         input = {},
         output = vim.api.nvim_buf_get_lines(buffer, 0, -1, true),
         has_ansi = false,
     }
 
-    local result = processor:process(event)
-
-    if not result then
-        return
-    end
-
-    -- Create terminal diagnostics from parse results
-    if options.terminal_diagnostics then
-        local terminal_diagnostics =
-            diagnostics.from_terminal_parse_results(result.parse_results)
-
-        diagnostics.set(buffer, terminal_diagnostics, {})
-
-        -- if options.stable or is_stable_buffer(buffer) then
-        --     buffer_cache.set(buffer, result.parse_results)
-        -- end
-    end
-
-    local project_diagnostics = {}
-    local populate_list = options.quickfix == true or options.locationlist == true
-
-    -- Create project diagnostics from parse results
-    if options.diagnostics or populate_list then
-        project_diagnostics = diagnostics.from_parse_results(result.parse_results)
-
-        if options.diagnostics then
-            set_project_diagnostics(project_diagnostics)
-        end
-    end
-
-    -- Populate the quickfix/location list with the diagnostics
-    if populate_list and #project_diagnostics > 0 then
-        local sources = vim.tbl_map(function(spec)
-            return spec:name()
-        end, result.command_specs)
-
-        if options.quickfix then
-            diagnostics.setqflist(project_diagnostics, {
-                open = true,
-                focus = false,
-                title = ("terminal-diagnostics.nvim (%s)"):format(
-                    vim.iter(sources):join(", ")
-                ),
-            })
-        end
-
-        if options.locationlist then
-            local win_id = vim.api.nvim_get_current_win()
-
-            vim.fn.setloclist(win_id, {}, " ", {})
-        end
-
-        if options.trouble then
-            local has_trouble, _ = pcall(require, "trouble")
-
-            if has_trouble then
-                vim.cmd("Trouble qflist open")
-            end
-        end
-    end
+    diagnostics.create_for_event(event, options)
 end
 
 ---@param parse_results terminal-diagnostics.parser.ParseResult[]
@@ -212,8 +210,8 @@ function diagnostics.from_parse_results(parse_results)
             bufnr = buffer,
             lnum = parse_result.values.lnum - 1,
             col = parse_result.values.col - 1,
-            end_lnum = parse_result.values.lnum,
-            end_col = 0, -- TODO:
+            end_lnum = parse_result.values.lnum - 1,
+            end_col = parse_result.values.col - 1, -- TODO:
             severity = vim.diagnostic.severity[severity],
             message = message,
             source = parse_result.command_spec:name(),

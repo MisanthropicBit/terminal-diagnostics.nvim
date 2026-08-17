@@ -2,7 +2,6 @@ local Subprocess = require("terminal-diagnostics.subprocess")
 
 --- Run tasks in parallel using an embedded neovim child process
 ---@class terminal-diagnostics.ParallelProcessor : terminal-diagnostics.OutputProcessor
----@field private _running        boolean
 ---@field private _subprocess     terminal-diagnostics.Subprocess
 local ParallelProcessor = {}
 
@@ -25,7 +24,6 @@ end
 ---@return terminal-diagnostics.ParallelProcessor
 function ParallelProcessor.new()
     local parallel = {
-        _running = false,
         _subprocess = Subprocess.new(),
     }
 

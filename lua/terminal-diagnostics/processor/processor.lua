@@ -1,7 +1,9 @@
 local builtin_command_specs = require("terminal-diagnostics.command_specs")
-local guess_command = require("terminal-diagnostics.output_processors.guess_command")
+local guess_command = require("terminal-diagnostics.processor.guess_command")
 local log = require("terminal-diagnostics.log")
 local patterns = require("terminal-diagnostics.patterns")
+
+-- TODO: Processor class solution is overkill, just create a bunch of functions instead
 
 ---@class terminal-diagnostics.OutputProcessorResult
 ---@field parse_results terminal-diagnostics.parser.ParseResult[]
@@ -25,7 +27,7 @@ function OutputProcessor:running()
     error("running method not implemented")
 end
 
----@param event   terminal-diagnostics.TerminalOutputEvent
+---@param event   terminal-diagnostics.TerminalRequestEvent
 ---@param options terminal-diagnostics.SequentialOutputProcessorOptions?
 ---@diagnostic disable-next-line: unused-local
 function OutputProcessor:process(event, options)

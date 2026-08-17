@@ -1,18 +1,15 @@
----@class terminal-diagnostics.SequentialOutputProcessor : terminal-diagnostics.OutputProcessor
-local SequentialOutputProcessor = {}
+local processor = {}
 
 local builtins = require("terminal-diagnostics.command_specs")
-local guess_command = require("terminal-diagnostics.output_processors.guess_command")
+local guess_command = require("terminal-diagnostics.processor.guess_command")
 local log = require("terminal-diagnostics.log")
-local notify = require("terminal-diagnostics.notify")
 local patterns = require("terminal-diagnostics.patterns")
+local Subprocess = require("terminal-diagnostics.subprocess")
 
----@class terminal-diagnostics.SequentialOutputProcessorOptions
+local subprocess = Subprocess.new()
 
--- TODO: Emit autocmd events after processing
--- TODO: Create clickable links for error codes?
-
-SequentialOutputProcessor.__index = SequentialOutputProcessor
+---@class terminal-diagnostics.ProcessorOptions
+---@field parallel boolean?
 
 ---@param input string[]?
 ---@param output string[]
@@ -43,25 +40,12 @@ local function get_command_specs(input, output)
     return command_specs
 end
 
-function SequentialOutputProcessor.new()
-    return setmetatable({}, SequentialOutputProcessor)
-end
-
-function SequentialOutputProcessor:start()
-end
-
-function SequentialOutputProcessor:stop()
-end
-
-function SequentialOutputProcessor:running()
-    return true
-end
-
----@param event   terminal-diagnostics.TerminalOutputEvent
----@param options terminal-diagnostics.SequentialOutputProcessorOptions?
+--- Must be a module function so it can potentially be called by a subprocess
+---@param event   terminal-diagnostics.TerminalRequestEvent
+---@param options terminal-diagnostics.ProcessorOptions?
 ---@return terminal-diagnostics.OutputProcessorResult?
 ---@diagnostic disable-next-line: unused-local
-function SequentialOutputProcessor:process(event, options)
+function processor._internal_process(event, options)
     local input, output = event.input, event.output
 
     -- 1. Attempt to guess the output format from the input command. Otherwise
@@ -69,13 +53,13 @@ function SequentialOutputProcessor:process(event, options)
     local command_specs = get_command_specs(input, output)
 
     if #command_specs == 0 then
-        log.debug("No viable command specs found for event", event)
+        log.debug("No viable command specs found for output event", event)
         return
     end
 
     -- 2. Parse output using all command specs
     local parse_results = {}
-    local start_lnum = event.output_pos and event.output_pos.from.lnum or 0
+    local start_lnum = event.output_range and event.output_range.from.lnum or 0
 
     ---@type terminal-diagnostics.ParseOptions
     local parse_options = {
@@ -94,7 +78,11 @@ function SequentialOutputProcessor:process(event, options)
         log.timing.stop(timing_name)
 
         if #_parse_results == 0 then
-            log.error(("Command spec '%s' did not have any parse results"):format(command_spec:name()))
+            log.error(
+                ("Command spec '%s' did not have any parse results"):format(
+                    command_spec:name()
+                )
+            )
         else
             vim.list_extend(parse_results, _parse_results)
         end
@@ -103,7 +91,7 @@ function SequentialOutputProcessor:process(event, options)
     log.timing.stop("sequential.parse_results")
 
     if #parse_results == 0 then
-        notify.error("Unexpectedly found no results when parsing output")
+        log.error("Unexpectedly found no results when parsing output")
         return
     end
 
@@ -115,4 +103,35 @@ function SequentialOutputProcessor:process(event, options)
     }
 end
 
-return SequentialOutputProcessor
+---@async
+---@param event    terminal-diagnostics.TerminalRequestEvent
+---@param callback fun(value: any)
+---@param options  terminal-diagnostics.ProcessorOptions?
+---@return terminal-diagnostics.OutputProcessorResult?
+function processor.process(event, callback, options)
+    local _options = options or {}
+
+    if _options.parallel then
+        if not subprocess:running() then
+            subprocess:start()
+
+            vim.api.nvim_create_autocmd("VimLeavePre", {
+                callback = function()
+                    subprocess:stop()
+                end
+            })
+        end
+
+        subprocess:call(
+            "require('terminal-diagnostics.processor')._internal_process",
+            { event, _options },
+            callback
+        )
+    else
+        local result = processor._internal_process(event, _options)
+
+        callback(result)
+    end
+end
+
+return processor
