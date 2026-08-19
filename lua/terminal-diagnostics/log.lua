@@ -156,7 +156,7 @@ function Logger:log(level_name, ...)
     end
 
     local info = debug.getinfo(4, "Sl")
-    local fileinfo = ("%s:%s"):format(info.source:sub(1), info.currentline)
+    local fileinfo = ("%s:%s"):format(info.source:sub(2), info.currentline)
     local parts = {
         table.concat({
             level_name,
@@ -274,7 +274,7 @@ function log.timing.stop(name)
     end
 
     table.remove(ordered_timings)
-    local elapsed_ms = vim.uv.hrtime() - timing.start_time
+    local elapsed_ms = (vim.uv.hrtime() - timing.start_time) / 1e6
 
     log.debug("timing", timing, ("elapsed ms: %.2f"):format(elapsed_ms))
 end
