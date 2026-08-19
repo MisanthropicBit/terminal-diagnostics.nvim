@@ -1,14 +1,16 @@
 local CommandSpec = require("terminal-diagnostics.command_spec")
 local SimpleMatcher = require("terminal-diagnostics.matchers.simple_matcher")
 
--- A fallback command spec that looks for a path optionally followed by a line
--- number and/or column number
+-- A fallback command spec that looks for the following common patterns:
+--
+-- * 'path.ts: message'
+-- * 'path.ts:10: message'
+-- * 'path.ts:10:2: message'
 
 ---@type terminal-diagnostics.MatchSpec
 local match_spec = {
-    -- TODO: Change to match: 'path:13:9: message'
-    pattern = [=[\v^([^[:space:]].*)[\(:](\d+)[,:](\d+)%(\):\s+|\s+-\s+)(error|warning|info)\s+TS(\d+)\s*:\s*(.*)$]=],
-    path_kind = "absolute",
+    pattern = [=[\v(%(%(\/)?%([.A-Za-z0-9-_]+\/)+)?[.A-Za-z0-9-_]+\.\w+):%((\d+)%(:(\d+))?:)? (.+)]=],
+    path_kind = "relative",
     path = 1,
     lnum = 2,
     col = 3,
