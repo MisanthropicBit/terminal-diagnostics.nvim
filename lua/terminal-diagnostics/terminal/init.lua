@@ -4,13 +4,13 @@ local terminal = {}
 ---@field buffer integer
 
 ---@class terminal-diagnostics.TerminalRequestOutputEvent : terminal-diagnostics.BaseTerminalRequestEvent
----@field type       "output_event"
----@field input      string[]? Input from terminal mode that resulted in the output
----@field input_pos  terminal-diagnostics.Range?
----@field output     string[]  The output of a command in the terminal
----@field output_pos terminal-diagnostics.Range?
----@field exit_code  integer?
----@field has_ansi   boolean
+---@field type         "output_event"
+---@field input        string[]? Input from terminal mode that resulted in the output
+---@field input_range  terminal-diagnostics.Range?
+---@field output       string[]  The output of a command in the terminal
+---@field output_range terminal-diagnostics.Range?
+---@field exit_code    integer?
+---@field has_ansi     boolean
 
 ---@class terminal-diagnostics.TerminalRequestDirectoryEvent : terminal-diagnostics.BaseTerminalRequestEvent
 ---@field type      "directory_event"
