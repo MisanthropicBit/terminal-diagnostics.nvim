@@ -8,9 +8,8 @@ local test_spec = tsc_command_spec:matcher():specs()[1]
 
 local expected_parse_results = {
     {
-        source = tsc_command_spec:name(),
+        command_spec = tsc_command_spec,
         buffer = 0,
-        kind = tsc_command_spec:kind(),
         range = {
             start = {
                 lnum = 3,
@@ -75,9 +74,8 @@ local expected_parse_results = {
         },
     },
     {
-        source = tsc_command_spec:name(),
+        command_spec = tsc_command_spec,
         buffer = 0,
-        kind = tsc_command_spec:kind(),
         range = {
             start = {
                 lnum = 8,

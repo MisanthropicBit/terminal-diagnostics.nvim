@@ -107,16 +107,15 @@ end
 ---@param event   terminal-diagnostics.TerminalRequestOutputEvent
 ---@param options terminal-diagnostics.DiagnosticsCreateOptions
 function diagnostics.create_for_event(event, options)
-    processor.process(event, function(result)
-        ---@cast result terminal-diagnostics.OutputProcessorResult
-        if not result then
+    processor.process(event, function(results)
+        ---@cast results terminal-diagnostics.OutputProcessorResult[]
+        if not results then
             return
         end
 
         -- Create terminal diagnostics from parse results
         if options.terminal_diagnostics then
-            local terminal_diagnostics =
-                diagnostics.from_terminal_parse_results(result.parse_results)
+            local terminal_diagnostics = diagnostics.from_terminal_parse_results(results)
 
             diagnostics.set(event.buffer, terminal_diagnostics, {})
 
@@ -130,7 +129,7 @@ function diagnostics.create_for_event(event, options)
 
         -- Create project diagnostics from parse results
         if options.diagnostics or populate_list then
-            project_diagnostics = diagnostics.from_parse_results(result.parse_results)
+            project_diagnostics = diagnostics.from_parse_results(results)
 
             if options.diagnostics then
                 set_project_diagnostics(project_diagnostics)
@@ -139,9 +138,9 @@ function diagnostics.create_for_event(event, options)
 
         -- Populate the quickfix/location list with the diagnostics
         if populate_list and #project_diagnostics > 0 then
-            local sources = vim.tbl_map(function(spec)
-                return spec:name()
-            end, result.command_specs)
+            local sources = vim.tbl_map(function(result)
+                return result.command_spec:name()
+            end, results)
 
             if options.quickfix then
                 diagnostics.setqflist(project_diagnostics, {
@@ -185,82 +184,97 @@ function diagnostics.create_for_buffer(buffer, options)
     diagnostics.create_for_event(event, options)
 end
 
----@param parse_results terminal-diagnostics.parser.ParseResult[]
+---@param results terminal-diagnostics.OutputProcessorResult[]
 ---@return vim.Diagnostic[]
-function diagnostics.from_parse_results(parse_results)
+function diagnostics.from_parse_results(results)
     local _diagnostics = {}
 
-    for _, parse_result in ipairs(parse_results) do
-        local buffer = 0
-        local path = parse_result.values.paths[1]
-        local severity = parse_result.values.severity or "info"
+    for _, result in ipairs(results) do
+        local grouped_parse_results =
+            result.command_spec:group_parse_results(result.parse_results)
 
-        -- TODO: How to handle multiple valid paths?
-        if path then
-            buffer = vim.uri_to_bufnr(vim.uri_from_fname(path))
+        for _, parse_result in ipairs(grouped_parse_results) do
+            local buffer = 0
+            local path = parse_result.values.paths[1]
+            local severity = parse_result.values.severity or "info"
+
+            -- TODO: How to handle multiple valid paths?
+            if path then
+                path = vim.fs.abspath(path)
+
+                -- NOTE: uri_to_bufnr will create an unloaded buffer if the file
+                -- does not exists
+                buffer = vim.uri_to_bufnr(vim.uri_from_fname(path))
+            end
+
+            local message = parse_result.values.message or "No message"
+
+            if parse_result.context and #parse_result.context.lines > 0 then
+                message = message
+                    .. "\n"
+                    .. table.concat(parse_result.context.lines, "\n")
+            end
+
+            local diagnostic = diagnostics.create({
+                bufnr = buffer,
+                lnum = parse_result.values.lnum - 1,
+                col = parse_result.values.col - 1,
+                end_lnum = parse_result.values.lnum - 1,
+                end_col = parse_result.values.col - 1, -- TODO:
+                severity = vim.diagnostic.severity[severity],
+                message = message,
+                source = parse_result.command_spec:name(),
+                code = parse_result.values.code,
+                valid = buffer ~= nil,
+                user_data = { path = path },
+            })
+
+            table.insert(_diagnostics, diagnostic)
         end
-
-        local message = parse_result.values.message or "No message"
-
-        if parse_result.context and #parse_result.context.lines > 0 then
-            message = message .. "\n" .. table.concat(parse_result.context.lines, "\n")
-        end
-
-        local diagnostic = diagnostics.create({
-            bufnr = buffer,
-            lnum = parse_result.values.lnum - 1,
-            col = parse_result.values.col - 1,
-            end_lnum = parse_result.values.lnum - 1,
-            end_col = parse_result.values.col - 1, -- TODO:
-            severity = vim.diagnostic.severity[severity],
-            message = message,
-            source = parse_result.command_spec:name(),
-            code = parse_result.values.code,
-            valid = buffer ~= nil,
-            user_data = { path = path },
-        })
-
-        table.insert(_diagnostics, diagnostic)
     end
 
     return _diagnostics
 end
 
----@param parse_results terminal-diagnostics.parser.ParseResult[]
+---@param results terminal-diagnostics.OutputProcessorResult[]
 ---@return vim.Diagnostic[]
-function diagnostics.from_terminal_parse_results(parse_results)
+function diagnostics.from_terminal_parse_results(results)
     local terminal_diagnostics = {}
 
-    for _, parse_result in ipairs(parse_results) do
-        if not parse_result.values then
-            goto continue
+    for _, result in ipairs(results) do
+        for _, parse_result in ipairs(result.parse_results) do
+            if not parse_result.values then
+                goto continue
+            end
+
+            local severity = parse_result.values.severity or "info"
+            local code = parse_result.values.code
+
+            if code and code == "" then
+                code = nil
+            end
+
+            local end_lnum = parse_result.context and parse_result.context.range.to.lnum or parse_result.range.from.lnum
+
+            local diagnostic = diagnostics.create({
+                bufnr = parse_result.buffer,
+                lnum = parse_result.range.from.lnum + 1,
+                end_lnum = end_lnum + 1,
+                col = parse_result.range.from.col,
+                end_col = parse_result.range.to.col,
+                severity = vim.diagnostic.severity[severity],
+                message = ("%s %s"):format(
+                    parse_result.command_spec:kind(),
+                    severity:lower()
+                ),
+                source = parse_result.command_spec:name(),
+                code = code,
+            })
+
+            table.insert(terminal_diagnostics, diagnostic)
+
+            ::continue::
         end
-
-        local severity = parse_result.values.severity or "info"
-        local code = parse_result.values.code
-
-        if code and code == "" then
-            code = nil
-        end
-
-        local diagnostic = diagnostics.create({
-            bufnr = parse_result.buffer,
-            lnum = parse_result.range.from.lnum + 1,
-            end_lnum = parse_result.context.range.to.lnum + 1,
-            col = parse_result.range.from.col,
-            end_col = parse_result.range.to.col,
-            severity = vim.diagnostic.severity[severity],
-            message = ("%s %s"):format(
-                parse_result.command_spec:kind(),
-                severity:lower()
-            ),
-            source = parse_result.command_spec:name(),
-            code = code,
-        })
-
-        table.insert(terminal_diagnostics, diagnostic)
-
-        ::continue::
     end
 
     return terminal_diagnostics

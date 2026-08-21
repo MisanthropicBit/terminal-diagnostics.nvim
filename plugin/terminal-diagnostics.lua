@@ -13,23 +13,63 @@ vim.api.nvim_create_user_command("TermDiagVersion", function()
     vim.print(require("terminal-diagnostics").version())
 end, { nargs = 0, desc = "Print the current version" })
 
-vim.api.nvim_create_user_command("TermDiagQuickfix", function() end, {
+vim.api.nvim_create_user_command("TermDiagQuickfix", function()
+    -- FIX:
+    vim.cmd(("TermDiagCreate quickfix %s"):format("parallel"))
+end, {
     nargs = 0,
     range = true,
     desc = "Open the last command output, or a selected range, in the quickfix buffer",
 })
 
-vim.api.nvim_create_user_command("TermDiagLocationList", function() end, {
+vim.api.nvim_create_user_command("TermDiagLocationList", function()
+    -- FIX:
+    vim.cmd(("TermDiagCreate locationlist %s"):format("parallel"))
+end, {
     nargs = 0,
     range = true,
     desc = "Open the last command output, or a selected range, in the location list",
 })
 
-vim.api.nvim_create_user_command("TermDiagCreate", function() end, {
-    nargs = 0,
+vim.api.nvim_create_user_command("TermDiagCreate", function(args)
+    local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
+        terminal_diagnostics = "flag",
+        diagnostics = "flag",
+        locationlist = "flag",
+        quickfix = "flag",
+        trouble = "flag",
+        parallel = "flag",
+        notify = "flag",
+        stable = "flag",
+        command_spec = "string",
+    })
+
+    local diagnostics = require("terminal-diagnostics.diagnostics")
+
+    diagnostics.create_for_buffer(vim.api.nvim_get_current_buf(), cmd_args.result)
+end, {
+    nargs = "+",
     range = true,
     desc =
-    "Create terminal diagnostics, project-wide diagnostics, quickfix items, location list items, or trouble.nvim items for the last command output or a selected range",
+    "Create diagnostics or quickfix/locationlist items for the current buffer or a selected range",
+})
+
+vim.api.nvim_create_user_command("TermDiagCreateLastCommand", function(args)
+    local diagnostics = require("terminal-diagnostics.diagnostics")
+    local handler = require("terminal-diagnostics.terminal.terminal_request_handler")
+    local last_event = handler.last_command_event(0)
+
+    if not last_event then
+        require("terminal-diagnostics.notify").error("No last command event registered for buffer")
+        return
+    end
+
+    diagnostics.create_for_event(last_event, cmd_args)
+end, {
+    nargs = 0,
+    count = 1,
+    bang = true,
+    desc = "Create diagnostics or quickfix/locationlist items for the last command output",
 })
 
 vim.api.nvim_create_user_command("TermDiagPrevious", function(args)
@@ -60,6 +100,11 @@ end, {
 
 vim.api.nvim_create_user_command("TermDiagSelect", function(args)
     local fargs = args.fargs
+    local select = require("terminal-diagnostics.api").select
+    local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
+        [1] = { "inner", "outer" },
+        [2] = vim.tbl_values(select.SelectField)
+    })
 
     if #fargs > 2 then
         vim.notify("Too many arguments, expected 0-2 arguments", vim.log.levels.ERROR)

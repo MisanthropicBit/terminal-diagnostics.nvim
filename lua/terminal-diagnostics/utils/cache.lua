@@ -2,14 +2,16 @@
 -- https://github.com/LuaLS/lua-language-server/issues/1861
 
 ---@class terminal-diagnostics.Cache
----@field private cache   table<string, unknown>
----@field private default (fun(key: any): any)?
+---@field private cache     table<string, unknown>
+---@field private default   (fun(key: any): any)?)
+---@field private aggregate boolean
 local Cache = {}
 
 Cache.__index = Cache
 
 ---@class terminal-diagnostics.CacheOptions
----@field default (fun(key: any): any)?
+---@field default   (fun(key: any): any)?
+---@field aggregate boolean?
 
 ---@param values  table<string | integer, unknown>?
 ---@param options terminal-diagnostics.CacheOptions?
@@ -21,6 +23,7 @@ function Cache.new(values, options)
     local cache = setmetatable({
         cache = values or {},
         default = options and options.default,
+        aggregate = options and options.aggregate,
     }, Cache)
 
     return cache
@@ -29,7 +32,15 @@ end
 ---@param key string | integer
 ---@param value unknown
 function Cache:set(key, value)
-    self.cache[key] = value
+    if self.aggregate then
+        if not self.cache[key] then
+            self.cache[key] = {}
+        end
+
+        table.insert(self.cache[key], value)
+    else
+        self.cache[key] = value
+    end
 end
 
 ---@param key string | integer

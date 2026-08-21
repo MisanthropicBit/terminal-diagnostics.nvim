@@ -81,4 +81,11 @@ function CommandSpec:parser()
     return self._parser
 end
 
+--- Group individual parse results for project diagnostics
+---@param parse_results terminal-diagnostics.parser.ParseResult[]
+---@return terminal-diagnostics.parser.ParseResult[]
+function CommandSpec:group_parse_results(parse_results)
+    return parse_results
+end
+
 return CommandSpec

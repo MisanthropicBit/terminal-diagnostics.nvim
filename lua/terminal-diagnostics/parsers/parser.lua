@@ -81,9 +81,8 @@ function Parser.create_parse_result(values, offset)
     local _offset = offset or 0
 
     return {
-        source = values.source,
+        command_spec = values.command_spec,
         buffer = values.buffer,
-        kind = values.kind,
         range = {
             from = {
                 lnum = matches[1].range.from.lnum + _offset,

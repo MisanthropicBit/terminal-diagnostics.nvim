@@ -1,12 +1,10 @@
 local new_set = MiniTest.new_set
 local eq = MiniTest.expect.equality
-local err = MiniTest.expect.error
 
 local eslint_stylish_command_spec =
     require("terminal-diagnostics.command_specs.eslint-stylish")
 
 local test_parser = eslint_stylish_command_spec:parser()
-local header_spec = eslint_stylish_command_spec:matcher():specs()[1]
 local error_spec = eslint_stylish_command_spec:matcher():specs()[2]
 
 local expected_parse_results = {
@@ -49,9 +47,8 @@ local expected_parse_results = {
     --     },
     -- },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 3,
@@ -94,13 +91,12 @@ local expected_parse_results = {
             paths = {
                 "/Users/terminal-diagnostics/test-files/target-files/foo.js",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 4,
@@ -143,13 +139,12 @@ local expected_parse_results = {
             paths = {
                 "/Users/terminal-diagnostics/test-files/target-files/foo.js",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 5,
@@ -192,13 +187,12 @@ local expected_parse_results = {
             paths = {
                 "/Users/terminal-diagnostics/test-files/target-files/foo.js",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 6,
@@ -245,9 +239,8 @@ local expected_parse_results = {
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 7,
@@ -294,9 +287,8 @@ local expected_parse_results = {
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 8,
@@ -343,9 +335,8 @@ local expected_parse_results = {
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 9,
@@ -388,13 +379,12 @@ local expected_parse_results = {
             paths = {
                 "/Users/terminal-diagnostics/test-files/target-files/foo.js",
             },
-            severity = 1,
+            severity = "ERROR",
         },
     },
     {
-        source = eslint_stylish_command_spec:name(),
+        command_spec = eslint_stylish_command_spec,
         buffer = 0,
-        kind = eslint_stylish_command_spec:kind(),
         range = {
             start = {
                 lnum = 10,
@@ -457,7 +447,7 @@ T["HeaderParser"] = new_set()
 T["HeaderParser"]["parse"] = new_set()
 
 T["HeaderParser"]["parse"]["parses lines"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, extract = true })
 
     eq(parse_results, expected_parse_results)
 end
@@ -470,19 +460,20 @@ end
 -- end
 
 T["HeaderParser"]["parse"]["parses lines with offset with no results"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0, offset = 12 })
+    local parse_results =
+        test_parser:parse(test_lines, { buffer = 0, offset = 12, extract = true })
 
     eq(parse_results, {})
 end
 
 T["HeaderParser"]["parse"]["parses lines with count"] = function()
-    local parse_results = test_parser:parse(test_lines, { buffer = 0, count = 1 })
+    local parse_results = test_parser:parse(test_lines, { buffer = 0, count = 1, extract = true })
 
     eq(parse_results, { expected_parse_results[1] })
 end
 
 T["HeaderParser"]["parse"]["parses nothing"] = function()
-    local parse_results = test_parser:parse({}, { buffer = 0 })
+    local parse_results = test_parser:parse({}, { buffer = 0, extract = true })
 
     eq(parse_results, {})
 end
@@ -492,7 +483,7 @@ T["HeaderParser"]["parse_buffer"] = new_set()
 T["HeaderParser"]["parse_buffer"]["parses a buffer"] = function()
     vim.cmd.edit("test-files/eslint-stylish.txt")
 
-    local parse_results = test_parser:parse_buffer(0, {})
+    local parse_results = test_parser:parse_buffer(0, { extract = true })
 
     eq(parse_results, expected_parse_results)
 end

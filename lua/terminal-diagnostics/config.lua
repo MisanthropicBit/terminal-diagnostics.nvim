@@ -24,12 +24,19 @@ local default_config = {
     highlight_context_lines = true,
     parallel = false,
     diagnostics = {
-        filter = function() end,
+        terminal_diagnostics = {
+            filter = function() end,
+        },
+        project_diagnostics = {
+            filter = function() end,
+        },
     },
     terminal = {
         enabled = true,
         diagnostics = {
-            create_options = {},
+            create_options = {
+                terminal_diagnostics = true,
+            },
         },
     },
 }

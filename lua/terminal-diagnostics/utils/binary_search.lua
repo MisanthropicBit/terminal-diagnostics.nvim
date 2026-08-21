@@ -1,0 +1,35 @@
+return function()
+--     # Python program to find closest number in a sorted array
+--
+-- def findClosest(arr, target):
+--     res = arr[0]
+--     lo = 0
+--     hi = len(arr) - 1
+--
+--     while lo <= hi:
+--         mid = lo + (hi - lo) // 2
+--
+--         # Update res if mid is closer to target
+--         if abs(arr[mid] - target) < abs(res - target):
+--             res = arr[mid]
+--
+--         # In case of a tie, prefer larger value
+--         elif abs(arr[mid] - target) == abs(res - target):
+--             res = max(res, arr[mid])
+--
+--         if arr[mid] == target:
+--             return arr[mid]
+--         elif arr[mid] < target:
+--             lo = mid + 1
+--         else:
+--             hi = mid - 1
+--
+--     return res
+end
+
+-- if __name__ == "__main__":
+--     arr = [1, 2, 4, 5, 6, 6, 8, 8, 9]
+--     target = 11
+--
+--     print(findClosest(arr, target))
+-- end

@@ -6,8 +6,8 @@ local patterns = require("terminal-diagnostics.patterns")
 -- TODO: Processor class solution is overkill, just create a bunch of functions instead
 
 ---@class terminal-diagnostics.OutputProcessorResult
+---@field command_spec  terminal-diagnostics.CommandSpec
 ---@field parse_results terminal-diagnostics.parser.ParseResult[]
----@field command_specs terminal-diagnostics.CommandSpec[]
 
 ---@class terminal-diagnostics.OutputProcessor
 local OutputProcessor = {}

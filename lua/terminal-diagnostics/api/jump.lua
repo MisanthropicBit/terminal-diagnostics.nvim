@@ -3,11 +3,12 @@ local jump = {}
 local builtins = require("terminal-diagnostics.command_specs")
 local notify = require("terminal-diagnostics.notify")
 local utils = require("terminal-diagnostics.utils")
+-- local buffer_cache = require("terminal-diagnostics.buffer_cache.buffer_cache")
 
--- local ns = vim.api.nvim_create_namespace("terminal-diagnostics.extmarks")
--- local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
---     clear = true,
--- })
+local ns = vim.api.nvim_create_namespace("terminal-diagnostics.extmarks")
+local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
+    clear = true,
+})
 
 ---@class terminal-diagnostics.JumpOptions
 ---@field wrap        boolean?
@@ -60,6 +61,27 @@ local function get_closest_command_spec(command_specs, match_options)
     return closest_command_spec
 end
 
+---@param buffer integer
+---@param lnum   integer
+---@param count  integer
+---@return terminal-diagnostics.ApiResult?
+local function get_cached_result(buffer, lnum, count)
+    ---@type terminal-diagnostics.BufferCacheEntry?
+    local cached = buffer_cache.get(buffer)
+
+    if cached and cached.parse_results then
+        ---@type terminal-diagnostics.parser.ParseResult
+        local result = cached.parse_results:find_closest(lnum, count)
+
+        return {
+            command_spec = result.command_spec,
+            matches = result.matches,
+        }
+    end
+end
+
+local function find_closest_match() end
+
 --- Find a consecutive match if the last jump result was consecutive
 --- (possibly has a match on the next line)
 ---comment
@@ -91,6 +113,8 @@ end
 ---@param options terminal-diagnostics.JumpOptions?
 ---@return terminal-diagnostics.ApiResult?
 function jump.jump(options)
+    local buffer = vim.api.nvim_get_current_buf()
+    local lnum, col = unpack(utils.cursor.get())
     local _options = options or { count = 1, wrap = false, keep_cursor = false }
     local count = _options.count or 1
 
@@ -98,8 +122,12 @@ function jump.jump(options)
         count = 1
     end
 
-    local buffer = vim.api.nvim_get_current_buf()
-    local lnum, col = unpack(utils.cursor.get())
+    -- local cached_result = get_cached_result(buffer, lnum, count)
+    --
+    -- if cached_result then
+    --     return cached_result
+    -- end
+
     local command_specs = builtins.get()
 
     -- TODO: Change lnum and col to a position
@@ -185,17 +213,17 @@ function jump.jump(options)
         pattern = "TerminalDiagnosticsPostJump",
         modeline = false,
         data = {
-            command_spec = closest.command_spec,
+            -- command_spec = closest.command_spec,
             buffer = buffer,
             ns = ns,
             augroup = augroup,
-            groups = function()
-                return require("terminal-diagnostics.patterns").parse_subgroups(
-                    closest.match.text,
-                    ---@diagnostic disable-next-line: param-type-mismatch
-                    closest.match.spec
-                )
-            end,
+            -- groups = function()
+            --     return require("terminal-diagnostics.patterns").parse_subgroups(
+            --         closest.match.text,
+            --         ---@diagnostic disable-next-line: param-type-mismatch
+            --         closest.match.spec
+            --     )
+            -- end,
         },
     })
 

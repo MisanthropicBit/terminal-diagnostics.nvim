@@ -43,7 +43,7 @@ end
 --- Must be a module function so it can potentially be called by a subprocess
 ---@param event   terminal-diagnostics.TerminalRequestEvent
 ---@param options terminal-diagnostics.ProcessorOptions?
----@return terminal-diagnostics.OutputProcessorResult?
+---@return terminal-diagnostics.OutputProcessorResult[]?
 ---@diagnostic disable-next-line: unused-local
 function processor._internal_process(event, options)
     local input, output = event.input, event.output
@@ -58,7 +58,7 @@ function processor._internal_process(event, options)
     end
 
     -- 2. Parse output using all command specs
-    local parse_results = {}
+    local results = {}
     local start_lnum = event.output_range and event.output_range.from.lnum or 0
 
     ---@type terminal-diagnostics.ParseOptions
@@ -74,33 +74,33 @@ function processor._internal_process(event, options)
         local timing_name = ("sequential.parse_results.%s"):format(command_spec:name())
 
         log.timing.start(timing_name)
-        local _parse_results = parser:parse(output, parse_options)
+        local parse_results = parser:parse(output, parse_options)
         log.timing.stop(timing_name)
 
-        if #_parse_results == 0 then
+        if #parse_results == 0 then
             log.error(
                 ("Command spec '%s' did not have any parse results"):format(
                     command_spec:name()
                 )
             )
         else
-            vim.list_extend(parse_results, _parse_results)
+            table.insert(results, {
+                command_spec = command_spec,
+                parse_results = parse_results,
+            })
         end
     end
 
     log.timing.stop("sequential.parse_results")
 
-    if #parse_results == 0 then
+    if #results == 0 then
         log.error("Unexpectedly found no results when parsing output")
         return
     end
 
     -- TODO: Resolve parse results that occupy the same lines
 
-    return {
-        parse_results = parse_results,
-        command_specs = command_specs,
-    }
+    return results
 end
 
 ---@async
@@ -118,7 +118,7 @@ function processor.process(event, callback, options)
             vim.api.nvim_create_autocmd("VimLeavePre", {
                 callback = function()
                     subprocess:stop()
-                end
+                end,
             })
         end
 

@@ -19,6 +19,7 @@ local terminal = require("terminal-diagnostics.terminal")
 ---@field output_range  terminal-diagnostics.Range?
 ---@field command_line  string[]?
 ---@field exit_code     integer?
+---@field last_sequence string
 
 local ESC = "\027"
 local OSC_133 = ESC .. "]133;"
@@ -109,9 +110,13 @@ local terminal_buffer_cache = Cache.new(nil, {
             buffer = -1,
             input_range = { value = nil, start = nil, end_ = nil },
             output_range = { start = nil, end_ = nil },
+            last_sequence = "",
         }
     end,
 })
+
+---@type terminal-diagnostics.Cache
+local last_command_event_cache = Cache.new()
 
 ---@param buffer integer
 ---@param region terminal-diagnostics.Range
@@ -168,11 +173,14 @@ function handler.start(callback)
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
 
+                entry.last_sequence = sequence
+
                 -- Only dispatch if we have output data
                 if entry.output_range.from then
                     local output_event = create_output_event(buffer, entry)
 
                     if output_event then
+                        last_command_event_cache:set(buffer, output_event)
                         callback(output_event)
                         terminal_buffer_cache:remove(buffer)
                     end
@@ -182,6 +190,8 @@ function handler.start(callback)
 
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
+
+                entry.last_sequence = sequence
 
                 -- Save the prompt end as the start of command output. If the terminal
                 -- emits command markers, this will be overwritten by the command start
@@ -199,6 +209,7 @@ function handler.start(callback)
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
 
+                entry.last_sequence = sequence
                 entry.output_range.from = { lnum = lnum, col = col }
                 -- terminal_buffer_cache:set(buffer, entry)
 
@@ -220,6 +231,7 @@ function handler.start(callback)
                 ---@type terminal-diagnostics.TerminalBufferCacheEntry
                 local entry = terminal_buffer_cache:get(buffer)
 
+                entry.last_sequence = sequence
                 entry.exit_code = parse_command_end_marker(sequence)
                 entry.output_range.to = { lnum = lnum, col = col }
             elseif matches_marker(sequence, CWD) then
@@ -243,6 +255,17 @@ function handler.stop()
     end
 
     vim.api.nvim_del_autocmd(autocmd_id)
+end
+
+--- Get the last event for a command in a given buffer
+---@param buffer integer
+---@return terminal-diagnostics.TerminalRequestOutputEvent?
+function handler.last_command_event(buffer)
+    if buffer == 0 then
+        buffer = vim.api.nvim_get_current_buf()
+    end
+
+    last_command_event_cache:get(buffer)
 end
 
 return handler

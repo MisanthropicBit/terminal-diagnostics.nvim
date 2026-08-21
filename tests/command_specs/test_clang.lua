@@ -31,7 +31,6 @@ local match1 = {
                 lnum = 2,
             },
         },
-
     },
 }
 
@@ -85,158 +84,189 @@ local match3 = {
     },
 }
 
-local expected_parse_results = { {
-    buffer = 0,
-    context = {
-      lines = {
-          "    2 |                 std::string message = std::format(",
-          "      |                                       ^    ~~~~~~",
-      },
-      range = {
-        end_ = {
-          col = 57,
-          lnum = 4
+local expected_parse_results = {
+    {
+        buffer = 0,
+        context = {
+            lines = {
+                "    2 |                 std::string message = std::format(",
+                "      |                                       ^    ~~~~~~",
+            },
+            range = {
+                end_ = {
+                    col = 57,
+                    lnum = 4,
+                },
+                start = {
+                    col = 0,
+                    lnum = 3,
+                },
+            },
         },
-        start = {
-          col = 0,
-          lnum = 3
-        }
-      }
-    },
-    kind = "build",
-    matches = { {
-        from = {
-          col = 0,
-          lnum = 2
+        kind = "build",
+        matches = {
+            {
+                from = {
+                    col = 0,
+                    lnum = 2,
+                },
+                spec = match_spec,
+                submatches = {
+                    "/Users/terminal-diagnostics/test-files/target-files/main.cpp",
+                    "2",
+                    "27",
+                    "error",
+                    "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+                },
+                text =
+                "/Users/terminal-diagnostics/test-files/target-files/main.cpp:2:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+                to = {
+                    col = 164,
+                    lnum = 2,
+                },
+            },
         },
-        spec = match_spec,
-        submatches = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp", "2", "27", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
-        text = "/Users/terminal-diagnostics/test-files/target-files/main.cpp:2:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-        to = {
-          col = 164,
-          lnum = 2
-        }
-      } },
-    range = {
-      end_ = {
-        col = 164,
-        lnum = 2
-      },
-      start = {
-        col = 0,
-        lnum = 2
-      }
-    },
-    source = "clang",
-    values = {
-      col = 27,
-      lnum = 2,
-      message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-      paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
-      severity = 1
-    }
-  }, {
-    buffer = 0,
-    context = {
-      lines = {
-          "  403 |   enum format : unsigned char { auto_format, native_format, generic_format };",
-          "      |        ^",
-      },
-      range = {
-        end_ = {
-          col = 16,
-          lnum = 7
+        range = {
+            end_ = {
+                col = 164,
+                lnum = 2,
+            },
+            start = {
+                col = 0,
+                lnum = 2,
+            },
         },
-        start = {
-          col = 0,
-          lnum = 6
-        }
-      }
-    },
-    kind = "build",
-    matches = { {
-        from = {
-          col = 0,
-          lnum = 5
+        values = {
+            col = 27,
+            lnum = 2,
+            message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+            paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
+            severity = 1,
         },
-        spec = match_spec,
-        submatches = { "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h", "403", "8", "note", "'std::filesystem::path::format' declared here" },
-        text = "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h:403:8: note: 'std::filesystem::path::format' declared here",
-        to = {
-          col = 130,
-          lnum = 5
-        }
-      } },
-    range = {
-      end_ = {
-        col = 130,
-        lnum = 5
-      },
-      start = {
-        col = 0,
-        lnum = 5
-      }
     },
-    source = "clang",
-    values = {
-      col = 8,
-      lnum = 403,
-      message = "'std::filesystem::path::format' declared here",
-      paths = { "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h" },
-      severity = "INFO"
-    }
-  }, {
-    buffer = 0,
-    context = {
-      lines = {
-          "    7 |             std::string message = std::format(",
-          "      |                                   ^    ~~~~~~",
-      },
-      range = {
-        end_ = {
-          col = 53,
-          lnum = 10,
+    {
+        buffer = 0,
+        context = {
+            lines = {
+                "  403 |   enum format : unsigned char { auto_format, native_format, generic_format };",
+                "      |        ^",
+            },
+            range = {
+                to = {
+                    col = 16,
+                    lnum = 7,
+                },
+                from = {
+                    col = 0,
+                    lnum = 6,
+                },
+            },
         },
-        start = {
-          col = 0,
-          lnum = 9
-        }
-      }
-    },
-    kind = "build",
-    matches = { {
-        from = {
-          col = 0,
-          lnum = 8
+        kind = "build",
+        matches = {
+            {
+                from = {
+                    col = 0,
+                    lnum = 5,
+                },
+                spec = match_spec,
+                submatches = {
+                    "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h",
+                    "403",
+                    "8",
+                    "note",
+                    "'std::filesystem::path::format' declared here",
+                },
+                text =
+                "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h:403:8: note: 'std::filesystem::path::format' declared here",
+                to = {
+                    col = 130,
+                    lnum = 5,
+                },
+            },
         },
-        spec = match_spec,
-        submatches = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp", "7", "27", "error", "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?" },
-        text = "/Users/terminal-diagnostics/test-files/target-files/main.cpp:7:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-        to = {
-          col = 164,
-          lnum = 8
-        }
-      } },
-    range = {
-      end_ = {
-        col = 164,
-        lnum = 8
-      },
-      start = {
-        col = 0,
-        lnum = 8
-      }
+        range = {
+            end_ = {
+                col = 130,
+                lnum = 5,
+            },
+            start = {
+                col = 0,
+                lnum = 5,
+            },
+        },
+        source = "clang",
+        values = {
+            col = 8,
+            lnum = 403,
+            message = "'std::filesystem::path::format' declared here",
+            paths = {
+                "/usr/local/Cellar/llvm/21.1.4/bin/../include/c++/v1/__filesystem/path.h",
+            },
+            severity = "INFO",
+        },
     },
-    source = "clang",
-    values = {
-      col = 27,
-      lnum = 7,
-      message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
-      paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
-      severity = 1
-    }
-  } }
-
+    {
+        buffer = 0,
+        context = {
+            lines = {
+                "    7 |             std::string message = std::format(",
+                "      |                                   ^    ~~~~~~",
+            },
+            range = {
+                end_ = {
+                    col = 53,
+                    lnum = 10,
+                },
+                start = {
+                    col = 0,
+                    lnum = 9,
+                },
+            },
+        },
+        kind = "build",
+        matches = {
+            {
+                from = {
+                    col = 0,
+                    lnum = 8,
+                },
+                spec = match_spec,
+                submatches = {
+                    "/Users/terminal-diagnostics/test-files/target-files/main.cpp",
+                    "7",
+                    "27",
+                    "error",
+                    "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+                },
+                text =
+                "/Users/terminal-diagnostics/test-files/target-files/main.cpp:7:27: error: no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+                to = {
+                    col = 164,
+                    lnum = 8,
+                },
+            },
+        },
+        range = {
+            end_ = {
+                col = 164,
+                lnum = 8,
+            },
+            start = {
+                col = 0,
+                lnum = 8,
+            },
+        },
+        source = "clang",
+        values = {
+            col = 27,
+            lnum = 7,
+            message = "no member named 'format' in namespace 'std'; did you mean 'std::filesystem::path::format'?",
+            paths = { "/Users/terminal-diagnostics/test-files/target-files/main.cpp" },
+            severity = 1,
+        },
+    },
+}
 
 ---@type string[]
 local test_lines = {}

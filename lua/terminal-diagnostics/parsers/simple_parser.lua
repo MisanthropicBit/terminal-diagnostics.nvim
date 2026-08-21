@@ -25,8 +25,6 @@ function SimpleParser:parse(lines, options)
     local offset = _options.offset or 1
     local extract_match = _options.extract
     local count = 0
-    local source = self._command_spec:name()
-    local kind = self._command_spec:kind()
     local has_context = self:has_context()
     local idx = 1
 
@@ -50,9 +48,8 @@ function SimpleParser:parse(lines, options)
             -- 3. No additional error output
 
             local parse_result = Parser.create_parse_result({
-                source = source,
+                command_spec = self._command_spec,
                 buffer = options.buffer,
-                kind = kind,
                 matches = { match },
             }, offset - 1)
 
@@ -66,7 +63,7 @@ function SimpleParser:parse(lines, options)
                 idx = idx + #spec.subpatterns
                 local prev_idx = idx
 
-                while self:is_context_line(lines[idx]) do
+                while self:is_context_line(lines[idx], spec) do
                     idx = idx + 1
                 end
 
