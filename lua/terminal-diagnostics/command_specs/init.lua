@@ -29,7 +29,7 @@ function builtins.get(filter)
 
     -- Append the fallback command spec to the end so it tried last when e.g.
     -- jumping between errors
-    table.insert(command_specs, #command_specs, require("terminal-diagnostics.command_specs.fallback"))
+    table.insert(command_specs, require("terminal-diagnostics.command_specs.fallback"))
 
     return command_specs
 end
