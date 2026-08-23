@@ -43,6 +43,14 @@ local function is_stable_buffer(buffer)
     return false
 end
 
+---@param name string
+---@return integer
+local function create_namespace_for_command_spec(name)
+    return vim.api.nvim_create_namespace(
+        "terminal-diagnostics.project-diagnostics." .. name
+    )
+end
+
 ---@return integer
 function diagnostics.namespace_id()
     return ns_id
@@ -51,21 +59,16 @@ end
 ---@param diagnostic vim.Diagnostic
 ---@return vim.Diagnostic
 function diagnostics.create(diagnostic)
-    return vim.tbl_extend(
+    local user_data = vim.tbl_extend(
         "force",
-        {
-            source = "terminal-diagnostics.nvim",
-        },
-        diagnostic,
-        {
-            namespace = ns_id,
-            user_data = vim.tbl_extend(
-                "force",
-                { generated_by = "terminal-diagnostics.nvim" },
-                diagnostic.user_data or {}
-            ),
-        }
+        { generated_by = "terminal-diagnostics.nvim" },
+        diagnostic.user_data or {}
     )
+
+    return vim.tbl_extend("force", { namespace = ns_id }, diagnostic, {
+        user_data = user_data,
+        source = "terminal-diagnostics.nvim",
+    })
 end
 
 ---@param project_diagnostics vim.Diagnostic[]
@@ -192,6 +195,7 @@ function diagnostics.from_parse_results(results)
     for _, result in ipairs(results) do
         local grouped_parse_results =
             result.command_spec:group_parse_results(result.parse_results)
+        local namespace = create_namespace_for_command_spec(result.command_spec:name())
 
         for _, parse_result in ipairs(grouped_parse_results) do
             local buffer = 0
@@ -227,6 +231,7 @@ function diagnostics.from_parse_results(results)
                 code = parse_result.values.code,
                 valid = buffer ~= nil,
                 user_data = { path = path },
+                namespace = namespace,
             })
 
             table.insert(_diagnostics, diagnostic)
@@ -254,7 +259,8 @@ function diagnostics.from_terminal_parse_results(results)
                 code = nil
             end
 
-            local end_lnum = parse_result.context and parse_result.context.range.to.lnum or parse_result.range.from.lnum
+            local end_lnum = parse_result.context and parse_result.context.range.to.lnum
+                or parse_result.range.from.lnum
 
             local diagnostic = diagnostics.create({
                 bufnr = parse_result.buffer,
@@ -284,7 +290,9 @@ end
 ---@param _diagnostics vim.Diagnostic[]
 ---@param options vim.diagnostic.Opts?
 function diagnostics.set(buffer, _diagnostics, options)
-    vim.diagnostic.set(ns_id, buffer, _diagnostics, options)
+    local namespace = _diagnostics[1].namespace or ns_id
+
+    vim.diagnostic.set(namespace, buffer, _diagnostics, options)
 end
 
 ---@param _diagnostics vim.Diagnostic[]
