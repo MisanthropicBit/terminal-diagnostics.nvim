@@ -276,7 +276,7 @@ function log.timing.stop(name)
     table.remove(ordered_timings)
     local elapsed_ms = (vim.uv.hrtime() - timing.start_time) / 1e6
 
-    log.debug("timing", timing, ("elapsed ms: %.2f"):format(elapsed_ms))
+    log.debug("timing", timing.data.name, ("elapsed ms: %.2f"):format(elapsed_ms))
 end
 
 ---@package
