@@ -42,10 +42,8 @@ end
 
 --- Must be a module function so it can potentially be called by a subprocess
 ---@param event   terminal-diagnostics.TerminalRequestEvent
----@param options terminal-diagnostics.ProcessorOptions?
 ---@return terminal-diagnostics.OutputProcessorResult[]?
----@diagnostic disable-next-line: unused-local
-function processor._internal_process(event, options)
+function processor._internal_process(event)
     local input, output = event.input, event.output
 
     -- 1. Attempt to guess the output format from the input command. Otherwise
@@ -67,11 +65,16 @@ function processor._internal_process(event, options)
         extract = true,
     }
 
-    log.timing.start("sequential.parse_results")
+    log.timing.start("processor.parse_results")
 
     for _, command_spec in ipairs(command_specs) do
+        -- If we already have results do not use the fallback command spec
+        if command_spec:name() == "fallback" and #results > 0 then
+            goto continue
+        end
+
         local parser = command_spec:parser()
-        local timing_name = ("sequential.parse_results.%s"):format(command_spec:name())
+        local timing_name = ("processor.parse_results.%s"):format(command_spec:name())
 
         log.timing.start(timing_name)
         local parse_results = parser:parse(output, parse_options)
@@ -89,9 +92,11 @@ function processor._internal_process(event, options)
                 parse_results = parse_results,
             })
         end
+
+        :: continue ::
     end
 
-    log.timing.stop("sequential.parse_results")
+    log.timing.stop("processor.parse_results")
 
     if #results == 0 then
         log.error("Unexpectedly found no results when parsing output")
@@ -124,11 +129,11 @@ function processor.process(event, callback, options)
 
         subprocess:call(
             "require('terminal-diagnostics.processor')._internal_process",
-            { event, _options },
+            { event },
             callback
         )
     else
-        local result = processor._internal_process(event, _options)
+        local result = processor._internal_process(event)
 
         callback(result)
     end
