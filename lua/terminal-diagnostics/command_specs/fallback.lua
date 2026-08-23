@@ -3,13 +3,22 @@ local SimpleMatcher = require("terminal-diagnostics.matchers.simple_matcher")
 
 -- A fallback command spec that looks for the following common patterns:
 --
--- * 'path.ts: message'
+-- * 'path.ts:10'
+-- * 'path.ts:10:2'
 -- * 'path.ts:10: message'
 -- * 'path.ts:10:2: message'
+--
+-- It does not match
+--
+-- * 'path.ts'
+--
+-- as it is too general
+
+local path_pattern = [=[\v(%(%(\/)?%([.A-Za-z0-9-_]+\/)+)?[.A-Za-z0-9-_]+\.\w+)]=]
 
 ---@type terminal-diagnostics.MatchSpec
 local match_spec = {
-    pattern = [=[\v(%(%(\/)?%([.A-Za-z0-9-_]+\/)+)?[.A-Za-z0-9-_]+\.\w+):%((\d+)%(:(\d+))?:)? (.+)]=],
+    pattern = path_pattern .. [=[:(\d+)%(:(\d+))?%(: (.+))?]=],
     path_kind = "relative",
     path = 1,
     lnum = 2,
