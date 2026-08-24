@@ -164,3 +164,21 @@ end, {
     nargs = 0,
     desc = "Open the log file for the default logger",
 })
+
+vim.api.nvim_create_user_command("TermDiagSearch", function()
+    local api_utils = require("terminal-diagnostics.api.api_utils")
+    local _, parse_result = api_utils.find_parse_result_at_cursor(0)
+    local notify = require("terminal-diagnostics.notify")
+
+    if not parse_result then
+        notify.error("No match under cursor")
+        return
+    end
+
+    local config = require("terminal-diagnostics.config")
+
+    config.search(parse_result)
+end, {
+    nargs = 0,
+    desc = "Search the internet for the error under the cursor",
+})

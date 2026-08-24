@@ -18,7 +18,9 @@ local config_loaded = false
 ---@field highlight_context_lines boolean?  Highlight context lines when creating terminal diagnostics
 ---@field parallel                boolean?  Whether to proceess diagnostics in parallel or not
 ---@field terminal                terminal-diagnostics.ConfigTerminalOptions
+---@field search                  fun(parse_result: terminal-diagnostics.parser.ParseResult)
 
+---@type terminal-diagnostics.Config
 local default_config = {
     include = nil,
     highlight_context_lines = true,
@@ -39,6 +41,30 @@ local default_config = {
             },
         },
     },
+    search = function(parse_result)
+        local name = parse_result.command_spec:name()
+        local message = parse_result.values.message
+        local code = parse_result.values.code
+
+        if not message then
+            notify.error("No error message found")
+            return
+        end
+
+        local query = ('"%s" %s'):format(name, message)
+
+        if code then
+            query = query .. " " .. code
+        end
+
+        local utils = require("terminal-diagnostics.utils")
+        local encoded_query = utils.url.encode(query)
+        local _, open_error = vim.ui.open("https://duckduckgo.com/?q=" .. encoded_query)
+
+        if open_error then
+            notify.error("Failed to search", open_error)
+        end
+    end,
 }
 
 --- Check if a value is a valid string option

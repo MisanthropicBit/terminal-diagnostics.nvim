@@ -99,6 +99,7 @@ function url.decode_with(value, options)
 
     return table.concat(result)
 end
+
 --- Url-decode a string
 ---@param value string
 ---@return string
