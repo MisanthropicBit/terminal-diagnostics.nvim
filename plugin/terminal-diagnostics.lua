@@ -13,24 +13,6 @@ vim.api.nvim_create_user_command("TermDiagVersion", function()
     vim.print(require("terminal-diagnostics").version())
 end, { nargs = 0, desc = "Print the current version" })
 
-vim.api.nvim_create_user_command("TermDiagQuickfix", function()
-    -- FIX:
-    vim.cmd(("TermDiagCreate quickfix %s"):format("parallel"))
-end, {
-    nargs = 0,
-    range = true,
-    desc = "Open the last command output, or a selected range, in the quickfix buffer",
-})
-
-vim.api.nvim_create_user_command("TermDiagLocationList", function()
-    -- FIX:
-    vim.cmd(("TermDiagCreate locationlist %s"):format("parallel"))
-end, {
-    nargs = 0,
-    range = true,
-    desc = "Open the last command output, or a selected range, in the location list",
-})
-
 vim.api.nvim_create_user_command("TermDiagCreate", function(args)
     local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
         terminal_diagnostics = "flag",
