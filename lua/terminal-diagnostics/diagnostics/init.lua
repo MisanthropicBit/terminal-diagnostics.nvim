@@ -66,10 +66,14 @@ function diagnostics.create(diagnostic)
         diagnostic.user_data or {}
     )
 
-    return vim.tbl_extend("force", { namespace = ns_id }, diagnostic, {
-        user_data = user_data,
-        source = "terminal-diagnostics.nvim",
-    })
+    return vim.tbl_extend(
+        "force",
+        { namespace = ns_id, source = "terminal-diagnostics.nvim" },
+        diagnostic,
+        {
+            user_data = user_data,
+        }
+    )
 end
 
 ---@param project_diagnostics vim.Diagnostic[]
