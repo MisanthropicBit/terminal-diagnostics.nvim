@@ -110,7 +110,7 @@ end
 
 ---@async
 ---@param event    terminal-diagnostics.TerminalRequestEvent
----@param callback fun(value: any)
+---@param callback fun(results: terminal-diagnostics.OutputProcessorResult[]?)
 ---@param options  terminal-diagnostics.ProcessorOptions?
 ---@return terminal-diagnostics.OutputProcessorResult?
 function processor.process(event, callback, options)
