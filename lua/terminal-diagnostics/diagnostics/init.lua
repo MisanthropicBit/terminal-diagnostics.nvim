@@ -223,6 +223,9 @@ function diagnostics.from_parse_results(results)
             result.command_spec:group_parse_results(result.parse_results)
         local namespace = create_namespace_for_command_spec(result.command_spec:name())
 
+        -- Clear the diagnostic namespace from the buffer
+        vim.diagnostic.reset(namespace, result.parse_results[1].buffer)
+
         for _, parse_result in ipairs(grouped_parse_results) do
             local buffer = 0
             local path = parse_result.values.paths[1]
@@ -273,6 +276,11 @@ function diagnostics.from_terminal_parse_results(results)
     local terminal_diagnostics = {}
 
     for _, result in ipairs(results) do
+        local namespace = create_namespace_for_command_spec(result.command_spec:name())
+
+        -- Clear the diagnostic namespace from the buffer
+        vim.diagnostic.reset(namespace, result.parse_results[1].buffer)
+
         for _, parse_result in ipairs(result.parse_results) do
             if not parse_result.values then
                 goto continue
