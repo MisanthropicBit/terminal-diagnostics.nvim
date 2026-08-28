@@ -128,7 +128,7 @@ function jump.jump(options)
     --     return cached_result
     -- end
 
-    local command_specs = builtins.get()
+    local command_specs = builtins.get_all()
 
     -- TODO: Change lnum and col to a position
     local match_options = {

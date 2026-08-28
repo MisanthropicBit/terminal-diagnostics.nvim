@@ -1,5 +1,6 @@
 local diagnostics = {}
 
+local command_specs = require("terminal-diagnostics.command_specs")
 local processor = require("terminal-diagnostics.processor")
 local terminal = require("terminal-diagnostics.terminal")
 -- local buffer_cache = require("terminal-diagnostics.buffer_cache.buffer_cache")
@@ -107,13 +108,34 @@ local function set_project_diagnostics(project_diagnostics)
     return project_diagnostics
 end
 
+--- We cannot transfer functions and tables with functions across subprocess
+--- boundaries via rpc so we need to patch the command specs in the results we
+--- get back. This is done in a single pass and most of the heavy work is still
+--- the actual parsing
+---@param results terminal-diagnostics.OutputProcessorResult[]
+local function patch_subprocess_parse_results(results)
+    for _, result in ipairs(results) do
+        ---@diagnostic disable-next-line: invisible
+        local command_spec = command_specs.get_by_name(result.command_spec._name)
+
+        result.command_spec = command_spec
+
+        for _, parse_result in ipairs(result.parse_results) do
+            parse_result.command_spec = command_spec
+        end
+    end
+end
+
 ---@param event   terminal-diagnostics.TerminalRequestOutputEvent
 ---@param options terminal-diagnostics.DiagnosticsCreateOptions
 function diagnostics.create_for_event(event, options)
     processor.process(event, function(results)
-        ---@cast results terminal-diagnostics.OutputProcessorResult[]
         if not results then
             return
+        end
+
+        if options.parallel then
+            patch_subprocess_parse_results(results)
         end
 
         -- Create terminal diagnostics from parse results

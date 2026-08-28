@@ -30,7 +30,7 @@ function cursor.find_at_cursor(buffer)
         ---@cast last_jump_result -nil
         result = last_jump_result
     else
-        local command_specs = builtins.get()
+        local command_specs = builtins.get_all()
 
         for _, command_spec in ipairs(command_specs) do
             local matcher = command_spec:matcher()

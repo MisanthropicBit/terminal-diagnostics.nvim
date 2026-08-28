@@ -10,9 +10,14 @@ local builtin_command_specs = {
     "tsc",
 }
 
+---@return terminal-diagnostics.CommandSpec
+function builtins.get_by_name(name)
+    return require("terminal-diagnostics.command_specs." .. name)
+end
+
 ---@param filter string[]?
 ---@return terminal-diagnostics.CommandSpec[]
-function builtins.get(filter)
+function builtins.get_all(filter)
     local names = builtin_command_specs
 
     if filter then

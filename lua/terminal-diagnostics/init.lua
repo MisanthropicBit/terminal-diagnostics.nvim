@@ -25,7 +25,11 @@ function terminal_diagnostics.setup(user_config)
             if event.type == terminal.TerminalEventType.OutputEvent then
                 diagnostics.create_for_event(
                     event,
-                    config.terminal.diagnostics.create_options
+                    vim.tbl_extend(
+                        "force",
+                        config.terminal.diagnostics.create_options,
+                        { parallel = config.parallel }
+                    )
                 )
             end
         end)

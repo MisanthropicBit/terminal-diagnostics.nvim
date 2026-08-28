@@ -45,7 +45,7 @@ function OutputProcessor.get_command_specs(input, output)
     if guessed_command_spec then
         command_specs = { guessed_command_spec }
     else
-        local builtins = builtin_command_specs.get()
+        local builtins = builtin_command_specs.get_all()
 
         for _, command_spec in ipairs(builtins) do
             for _, match_spec in ipairs(command_spec:matcher():specs()) do
