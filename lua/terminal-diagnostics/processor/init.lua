@@ -69,7 +69,7 @@ function processor._internal_process(event)
 
     for _, command_spec in ipairs(command_specs) do
         -- If we already have results do not use the fallback command spec
-        if command_spec:name() == "fallback" and #results > 0 then
+        if command_spec:name() == "path" and #results > 0 then
             goto continue
         end
 
