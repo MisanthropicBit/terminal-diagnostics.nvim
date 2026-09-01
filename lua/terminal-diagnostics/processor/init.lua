@@ -57,7 +57,7 @@ function processor._internal_process(event)
 
     -- 2. Parse output using all command specs
     local results = {}
-    local start_lnum = event.output_range and event.output_range.from.lnum or 0
+    local start_lnum = event.output_range and event.output_range.from.lnum or 1
 
     ---@type terminal-diagnostics.ParseOptions
     local parse_options = {
