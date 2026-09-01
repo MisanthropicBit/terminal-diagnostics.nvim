@@ -61,6 +61,7 @@ function processor._internal_process(event)
 
     ---@type terminal-diagnostics.ParseOptions
     local parse_options = {
+        buffer = event.buffer,
         offset = start_lnum,
         extract = true,
     }

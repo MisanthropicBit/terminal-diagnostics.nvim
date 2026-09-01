@@ -49,7 +49,7 @@ function SimpleParser:parse(lines, options)
 
             local parse_result = Parser.create_parse_result({
                 command_spec = self._command_spec,
-                buffer = options.buffer,
+                buffer = _options.buffer,
                 matches = { match },
             }, offset - 1)
 
@@ -88,12 +88,12 @@ function SimpleParser:parse(lines, options)
             ::continue::
         end
 
-        if options.count and count == options.count then
+        if _options.count and count == _options.count then
             break
         end
     end
 
-    if options.count and count == options.count then
+    if _options.count and count == _options.count then
         return results
     end
 

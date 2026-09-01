@@ -239,6 +239,9 @@ end
 
 ---@param data string | table<string, unknown>
 function log.timing.start(data)
+    -- TODO: Make an autocmd for VimLeavePre that logs errors if we forget to call
+    -- log.timing.stop
+
     local _data = type(data) == "string" and { name = data } or data
     ---@cast _data table<string, unknown>
 
