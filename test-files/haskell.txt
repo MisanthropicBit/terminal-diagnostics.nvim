@@ -1,0 +1,24 @@
+
+LambdaInCase.hs:6:5: error: [GHC-00482]
+    Lambda-syntax in pattern.
+    Pattern matching on functions is not possible.
+  |
+6 |     \a -> a
+  |     ^^^^^^^
+
+DependencyOrder.hs:8:15: error: [GHC-97739]
+    • These kind and type variables: a k (b :: k)
+      are out of dependency order. Perhaps try this ordering:
+        k (a :: k) (b :: k)
+    • In the type signature: foo :: forall a k (b :: k). SameKind a b
+  |
+8 | foo :: forall a k (b :: k). SameKind a b
+  |               ^^^^^^^^^^^^
+
+ViewPatternExpr.hs:3:6: error: [GHC-66228]
+    View pattern in expression context: sqrt -> y
+  |
+3 | h = (sqrt -> y)
+  |      ^^^^^^^^^
+
+
