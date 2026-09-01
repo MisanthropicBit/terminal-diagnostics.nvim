@@ -1,5 +1,6 @@
 local diagnostics = {}
 
+local config = require("terminal-diagnostics.config")
 local command_specs = require("terminal-diagnostics.command_specs")
 local processor = require("terminal-diagnostics.processor")
 local terminal = require("terminal-diagnostics.terminal")
@@ -24,6 +25,7 @@ local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
 ---@field parallel             boolean?
 ---@field filter               terminal-diagnostics.DiagnosticsFilter?
 ---@field stable               boolean? If the buffer is stable and won't be modified
+---@field links                boolean?
 
 --- Determine if a buffer is stable and probably won't be modified in
 --- the future so we can cache the parse results
@@ -151,6 +153,16 @@ function diagnostics.create_for_event(event, options)
             -- if options.stable or is_stable_buffer(buffer) then
             --     buffer_cache.set(buffer, result.parse_results)
             -- end
+        end
+
+        if options.links then
+            for _, result in ipairs(results) do
+                local namespace = create_namespace_for_command_spec(result.command_spec:name())
+
+                for _, parse_result in ipairs(result.parse_results) do
+                    config.terminal.create_link(namespace, parse_result)
+                end
+            end
         end
 
         local project_diagnostics = {}

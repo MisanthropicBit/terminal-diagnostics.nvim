@@ -6,19 +6,43 @@ local notify = require("terminal-diagnostics.notify")
 
 local config_loaded = false
 
+local base_url = "https://duckduckgo.com/?q="
+
+---@alias terminal-diagnostics.CreateLinkFunc fun(namespace: integer, parse_result: terminal-diagnostics.parser.ParseResult)
+
 ---@class terminal-diagnostics.ConfigTerminalDiagnostics
 ---@field create_options terminal-diagnostics.DiagnosticsCreateOptions
 
 ---@class terminal-diagnostics.ConfigTerminalOptions
 ---@field enabled     boolean?
 ---@field diagnostics terminal-diagnostics.ConfigTerminalDiagnostics
+---@field create_link terminal-diagnostics.CreateLinkFunc
+---@field search      fun(parse_result: terminal-diagnostics.parser.ParseResult)
 
 ---@class terminal-diagnostics.Config
 ---@field include                 string[]? Command specs to include, excluding all others
 ---@field highlight_context_lines boolean?  Highlight context lines when creating terminal diagnostics
 ---@field parallel                boolean?  Whether to proceess diagnostics in parallel or not
 ---@field terminal                terminal-diagnostics.ConfigTerminalOptions
----@field search                  fun(parse_result: terminal-diagnostics.parser.ParseResult)
+
+local function create_html_query_parameter(parse_result)
+    local name = parse_result.command_spec:name()
+    local message = parse_result.values.message
+    local code = parse_result.values.code
+
+    if not message then
+        notify.error("No error message found")
+        return
+    end
+
+    local query = ('"%s" %s'):format(name, message)
+
+    if code then
+        query = query .. " " .. code
+    end
+
+    return require("terminal-diagnostics.utils").url.encode(query)
+end
 
 ---@type terminal-diagnostics.Config
 local default_config = {
@@ -40,31 +64,30 @@ local default_config = {
                 terminal_diagnostics = true,
             },
         },
+        create_link = function(namespace, parse_result)
+            vim.print(vim.inspect(parse_result))
+            if not parse_result.buffer then
+                return
+            end
+
+            local encoded_query = create_html_query_parameter(parse_result)
+
+            require("terminal-diagnostics.extmark").create_link(
+                namespace,
+                parse_result.buffer,
+                parse_result.range,
+                base_url .. encoded_query
+            )
+        end,
+        search = function(parse_result)
+            local encoded_query = create_html_query_parameter(parse_result)
+            local _, open_error = vim.ui.open(base_url .. encoded_query)
+
+            if open_error then
+                notify.error("Failed to search", open_error)
+            end
+        end,
     },
-    search = function(parse_result)
-        local name = parse_result.command_spec:name()
-        local message = parse_result.values.message
-        local code = parse_result.values.code
-
-        if not message then
-            notify.error("No error message found")
-            return
-        end
-
-        local query = ('"%s" %s'):format(name, message)
-
-        if code then
-            query = query .. " " .. code
-        end
-
-        local utils = require("terminal-diagnostics.utils")
-        local encoded_query = utils.url.encode(query)
-        local _, open_error = vim.ui.open("https://duckduckgo.com/?q=" .. encoded_query)
-
-        if open_error then
-            notify.error("Failed to search", open_error)
-        end
-    end,
 }
 
 --- Check if a value is a valid string option

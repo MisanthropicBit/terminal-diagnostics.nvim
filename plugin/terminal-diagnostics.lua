@@ -23,6 +23,7 @@ vim.api.nvim_create_user_command("TermDiagCreate", function(args)
         parallel = "flag",
         notify = "flag",
         stable = "flag",
+        links = "flag",
         command_spec = "string",
     })
 
