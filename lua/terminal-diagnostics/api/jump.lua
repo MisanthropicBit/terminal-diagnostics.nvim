@@ -34,7 +34,7 @@ local last_jump_result
 
 ---@param command_specs terminal-diagnostics.CommandSpec[]
 ---@param match_options { buffer: integer, lnum: integer, col: integer, count: integer }
----@return terminal-diagnostics.ClosestCommandSpec
+---@return terminal-diagnostics.ClosestCommandSpec?
 local function get_closest_command_spec(command_specs, match_options)
     ---@type terminal-diagnostics.ClosestCommandSpec
     local closest_command_spec = {
@@ -58,7 +58,7 @@ local function get_closest_command_spec(command_specs, match_options)
         end
     end
 
-    return closest_command_spec
+    return closest_command_spec.match and closest_command_spec or nil
 end
 
 ---@param buffer integer
@@ -141,6 +141,7 @@ function jump.jump(options)
     ---@type terminal-diagnostics.ClosestCommandSpec?
     local closest
     local idx = 1
+    local did_wrap = false
 
     if last_jump_result then
         closest = find_consecutive_match(
@@ -151,7 +152,7 @@ function jump.jump(options)
     end
 
     while idx <= math.abs(count) do
-        if closest then
+        if closest and closest.match then
             closest = find_consecutive_match(closest.match, closest.command_spec, match_options)
         end
 
@@ -159,8 +160,8 @@ function jump.jump(options)
             closest = get_closest_command_spec(command_specs, match_options)
         end
 
-        if not closest.command_spec then
-            if not _options.wrap then
+        if not closest then
+            if not _options.wrap or did_wrap then
                 break
             end
 
@@ -171,6 +172,8 @@ function jump.jump(options)
                 match_options.lnum = 0
                 match_options.col = 0
             end
+
+            did_wrap = true
         else
             if idx < math.abs(count) then
                 match_options.lnum = closest.match.range.to.lnum
@@ -199,13 +202,12 @@ function jump.jump(options)
         return
     end
 
-    -- Get the full match
-    local results = closest.command_spec:matcher():match(match_options)
+    local matches = closest.command_spec:matcher():match(match_options)
 
-    if #results > 0 then
+    if #matches > 0 then
         last_jump_result = {
             command_spec = closest.command_spec,
-            matches = results,
+            matches = matches,
         }
     end
 
@@ -233,7 +235,7 @@ function jump.jump(options)
 
     return {
         command_spec = closest.command_spec,
-        matches = results,
+        matches = matches,
     }
 end
 
