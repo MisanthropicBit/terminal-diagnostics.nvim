@@ -55,6 +55,18 @@ end, {
     desc = "Create diagnostics or quickfix/locationlist items for the last command output",
 })
 
+vim.api.nvim_create_user_command("TermDiagFirst", function()
+    vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+    require("terminal-diagnostics.api").jump.jump({ wrap = false, count = 1 })
+end, { nargs = 0, desc = "Jump to the first error" })
+
+vim.api.nvim_create_user_command("TermDiagLast", function()
+    vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(0), 0 })
+
+    require("terminal-diagnostics.api").jump.jump({ wrap = false, count = -1 })
+end, { nargs = 0, desc = "Jump to the last error" })
+
 vim.api.nvim_create_user_command("TermDiagPrevious", function(args)
     require("terminal-diagnostics.api").jump.jump({
         wrap = args.bang,
