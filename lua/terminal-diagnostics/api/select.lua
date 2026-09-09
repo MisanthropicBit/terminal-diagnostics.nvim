@@ -14,6 +14,12 @@ select.SelectField = {
     Message = "message",
 }
 
+---@param field terminal-diagnostics.SelectField
+---@return boolean
+local function select_field_validator(field)
+    return select.SelectField[field] ~= nil
+end
+
 ---@class terminal-diagnostics.SelectOptions
 ---@field lookahead boolean? Scan forward and try to find a match
 ---@field outer     boolean? Select the "outer" (instead of inner) error message
@@ -31,7 +37,7 @@ end
 ---@param options terminal-diagnostics.SelectOptions
 ---@return terminal-diagnostics.ApiResult?
 local function handle_inner_select(cursor_result, options)
-    -- 1. If there is a result on the cursor, use taht
+    -- 1. If there is a result on the cursor, use that
     if cursor_result then
         -- TODO: Use the result that overlaps with the cursor
         return cursor_result
@@ -45,20 +51,18 @@ local function handle_inner_select(cursor_result, options)
         wrap = false,
     })
 
-    if prev then
-        if not prev.command_spec:parser():has_context() then
-            return
-        end
+    if not prev or not prev.command_spec:parser():has_context() then
+        return
+    end
 
-        local parse_result = api_utils.get_single_parse_result_with_context(prev)
+    local parse_result = api_utils.get_single_parse_result_with_context(prev)
 
-        if parse_result then
-            local context = parse_result.context
-            ---@cast context -nil
+    if parse_result then
+        local context = parse_result.context
+        ---@cast context -nil
 
-            if range.contains(context.range, lnum) then
-                return prev
-            end
+        if range.contains(context.range, lnum) then
+            return prev
         end
     end
 
@@ -80,7 +84,12 @@ local function handle_outer_select(cursor_result, options)
     if cursor_result then
         -- If parser does not support context lines just return the result
         if not cursor_result.command_spec:parser():has_context() then
-            return cursor_result
+            local length = #cursor_result.matches
+
+            return cursor_result, {
+                from = cursor_result.matches[length].range.from,
+                to = cursor_result.matches[length].range.to,
+            }
         end
 
         local parse_result = api_utils.get_single_parse_result_with_context(cursor_result)
@@ -94,9 +103,11 @@ local function handle_outer_select(cursor_result, options)
                 to = context.range.to,
             }
         else
+            local length = #cursor_result.matches
+
             return cursor_result, {
-                from = cursor_result.matches[1].range.from,
-                to = cursor_result.matches[1].range.to,
+                from = cursor_result.matches[length].range.from,
+                to = cursor_result.matches[length].range.to,
             }
         end
     end
@@ -164,11 +175,19 @@ local function handle_outer_select(cursor_result, options)
     end
 end
 
+-- TODO: Validate arguments for public all api functions
+
 ---@param options terminal-diagnostics.SelectOptions?
 function select.select(options)
-    -- TODO: Validate arguments for public all api functions
-
     local _options = options or {}
+
+    -- TODO: Think in terms of simple vs. header parser
+
+    vim.validate("options.lookahead", _options.lookahead, "boolean", true)
+    vim.validate("options.outer", _options.outer, "boolean", true)
+    vim.validate("options.field", _options.field, select_field_validator, true)
+
+    local lnum, _ = unpack(utils.cursor.api_get())
     local result = require("terminal-diagnostics.api.cursor").find_at_cursor(0)
     local _range ---@type terminal-diagnostics.Range?
 
@@ -182,7 +201,23 @@ function select.select(options)
         return
     end
 
-    local from, to = result.matches[1].range.from, result.matches[1].range.to
+    local cursor_match = result.matches[1]
+
+    -- Find the match that is on the cursor. For command specs with
+    -- headers we might get multiple matches (header + error)
+    for idx = 2, #result.matches do
+        local match = result.matches[idx]
+
+        if not match then
+            break
+        end
+
+        if lnum == match.range.from.lnum then
+            cursor_match = match
+        end
+    end
+
+    local from, to = cursor_match.range.from, cursor_match.range.to
 
     if _options.outer then
         ---@cast _range -nil

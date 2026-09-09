@@ -34,12 +34,12 @@ function cursor.find_at_cursor(buffer)
 
         for _, command_spec in ipairs(command_specs) do
             local matcher = command_spec:matcher()
-            local results = matcher:match_at_cursor({ buffer = buffer })
+            local matches = matcher:match_at_cursor({ buffer = buffer })
 
-            if #results > 0 then
+            if #matches > 0 then
                 result = {
                     command_spec = command_spec,
-                    matches = results,
+                    matches = matches,
                 }
 
                 break

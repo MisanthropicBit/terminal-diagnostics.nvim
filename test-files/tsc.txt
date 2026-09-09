@@ -2,13 +2,13 @@
 
 $ tsc .
 test-files/target-files/main.ts:6:26 - error TS2322: Type 'null' is not assignable to type 'Person'.
-
 6     return null;
       ~~~~~~~~~~~~
 
 test-files/target-files/main.ts:7:27 - error TS2322: Type 'undefined' is not assignable to type 'Person'.
 
-6     return undefined;
-      ~~~~~~~~~~~~~~~~~
-
+7 const student: Person
+  ~~~~~~~~~~~~~~~~~~~~~
+8   = undefined
+    ~~~~~~~~~~~
 

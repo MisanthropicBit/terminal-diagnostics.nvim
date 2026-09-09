@@ -17,39 +17,30 @@ local match_spec = {
 }
 
 local matcher = SimpleMatcher.new({ specs = { match_spec } })
-local parser = SimpleParser.new()
+local parser = SimpleParser.new({ has_context = true })
 
-parser:extend({
-    ---@param self terminal-diagnostics.parser.SimpleMatcherParser
-    ---@param line string
-    ---@return boolean
-    is_context_line = function(self, line)
-        if line:match("%s+~+") then
+function parser:is_context_line(line)
+    if self._underline_state == 2 then
+        ---@diagnostic disable-next-line: inject-field
+        self._underline_state = 0 -- Reset state
+        return false
+    end
+
+    if line:match("%s+~+") then
+        ---@diagnostic disable-next-line: inject-field
+        self._underline_state = 1
+
+        return true
+    elseif line == "" then
+        if self._underline_state == 1 then
             ---@diagnostic disable-next-line: inject-field
-            self._underline_state = 1
-
-            return true
-        else
-            if self._underline_state == 1 then
-                ---@diagnostic disable-next-line: inject-field
-                self._underline_state = self._underline_state + 1
-
-                return true
-            elseif self._underline_state == 2 then
-                ---@diagnostic disable-next-line: inject-field
-                self._underline_state = 0
-
-                return false
-            end
-
-            return true
+            self._underline_state = self._underline_state + 1
         end
-    end,
-})
 
-return CommandSpec.new(
-    "tsc",
-    CommandSpec.CommandKind.Build,
-    matcher,
-    { parser = parser }
-)
+        return true
+    end
+
+    return true
+end
+
+return CommandSpec.new("tsc", CommandSpec.CommandKind.Build, matcher, { parser = parser })

@@ -1,5 +1,9 @@
 -- TODO: ParseOptions.context is not a great name
 
+---@class terminal-diagnostics.ParserOptions
+---@field command_spec terminal-diagnostics.CommandSpec?
+---@field has_context boolean?
+
 ---@class terminal-diagnostics.ParseOptions
 ---@field buffer  integer? The buffer that lines originating from if any
 ---@field offset  integer?
@@ -7,10 +11,17 @@
 ---@field count   integer?
 
 ---@class terminal-diagnostics.parser.Parser
----@field _command_spec   terminal-diagnostics.CommandSpec
+---@field protected _command_spec terminal-diagnostics.CommandSpec
+---@field protected _has_context boolean?
 local Parser = {}
 
 Parser.__index = Parser
+
+---@enum terminal-diagnostics.ParserKind
+Parser.ParserKind = {
+    Simple = "simple",
+    Header = "header",
+}
 
 ---@return terminal-diagnostics.parser.Parser
 function Parser.new()
@@ -20,6 +31,11 @@ end
 ---@param command_spec terminal-diagnostics.CommandSpec
 function Parser:set_command_spec(command_spec)
     self._command_spec = command_spec
+end
+
+---@return terminal-diagnostics.ParserKind
+function Parser:kind()
+    error("Not implemented")
 end
 
 ---@param lines string[]
@@ -99,8 +115,7 @@ end
 
 ---@return boolean
 function Parser:has_context()
-    ---@diagnostic disable-next-line: undefined-field
-    return self.is_context_line ~= nil
+    return self._has_context
 end
 
 ---@param mixin table<string, function>

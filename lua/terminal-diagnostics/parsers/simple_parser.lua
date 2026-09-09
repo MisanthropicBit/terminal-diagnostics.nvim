@@ -2,17 +2,28 @@ local Parser = require("terminal-diagnostics.parsers.parser")
 local matchers = require("terminal-diagnostics.matchers")
 local patterns = require("terminal-diagnostics.patterns")
 
----@class terminal-diagnostics.parser.SimpleMatcherParser : terminal-diagnostics.parser.Parser
----@field private command_spec terminal-diagnostics.CommandSpec
+---@class terminal-diagnostics.parser.SimpleParserOptions : terminal-diagnostics.ParserOptions
+
+---@class terminal-diagnostics.parser.SimpleParser : terminal-diagnostics.parser.Parser
 local SimpleParser = setmetatable({}, Parser)
 
 SimpleParser.__index = SimpleParser
 
----@param command_spec terminal-diagnostics.CommandSpec?
----@return terminal-diagnostics.parser.SimpleMatcherParser
-function SimpleParser.new(command_spec)
+---@param options terminal-diagnostics.parser.SimpleParserOptions?
+---@return terminal-diagnostics.parser.SimpleParser
+function SimpleParser.new(options)
+    local _options = options or {}
+
     -- TODO: Check matcher kind
-    return setmetatable({ _command_spec = command_spec }, SimpleParser)
+    return setmetatable({
+        _command_spec = _options.command_spec,
+        _has_context = _options.has_context,
+    }, SimpleParser)
+end
+
+---@return terminal-diagnostics.ParserKind
+function SimpleParser:kind()
+    return Parser.ParserKind.Simple
 end
 
 ---@param lines string[]

@@ -31,7 +31,7 @@ local matcher = SimpleMatcher.new({ specs = { match_spec } })
 local parser = SimpleParser.new()
 
 parser:extend({
-    ---@param self terminal-diagnostics.parser.SimpleMatcherParser
+    ---@param self terminal-diagnostics.parser.SimpleParser
     ---@param line string
     ---@return boolean
     ---@diagnostic disable-next-line: unused-local

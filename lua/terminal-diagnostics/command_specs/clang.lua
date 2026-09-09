@@ -18,10 +18,10 @@ local error_spec = {
 }
 
 local matcher = SimpleMatcher.new({ specs = { error_spec }})
-local parser = SimpleParser.new()
+local parser = SimpleParser.new({ has_context = true })
 
 parser:extend({
-    ---@param self terminal-diagnostics.parser.SimpleMatcherParser
+    ---@param self terminal-diagnostics.parser.SimpleParser
     ---@param line string
     ---@return boolean
     ---@diagnostic disable-next-line: unused-local
