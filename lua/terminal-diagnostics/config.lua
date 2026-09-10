@@ -6,8 +6,6 @@ local notify = require("terminal-diagnostics.notify")
 
 local config_loaded = false
 
-local base_url = "https://duckduckgo.com/?q="
-
 ---@alias terminal-diagnostics.CreateLinkFunc fun(namespace: integer, parse_result: terminal-diagnostics.parser.ParseResult)
 
 ---@class terminal-diagnostics.ConfigTerminalDiagnostics
@@ -17,7 +15,7 @@ local base_url = "https://duckduckgo.com/?q="
 ---@field enabled     boolean?
 ---@field diagnostics terminal-diagnostics.ConfigTerminalDiagnostics
 ---@field create_link terminal-diagnostics.CreateLinkFunc
----@field search      fun(parse_result: terminal-diagnostics.parser.ParseResult)
+---@field search      terminal-diagnostics.SearchFunc
 
 ---@class terminal-diagnostics.Config
 ---@field include                 string[]? Command specs to include, excluding all others
@@ -65,12 +63,12 @@ local default_config = {
             },
         },
         create_link = function(namespace, parse_result)
-            vim.print(vim.inspect(parse_result))
             if not parse_result.buffer then
                 return
             end
 
             local encoded_query = create_html_query_parameter(parse_result)
+            local base_url = require("terminal-diagnostics.search").base_url()
 
             require("terminal-diagnostics.extmark").create_link(
                 namespace,
@@ -79,14 +77,7 @@ local default_config = {
                 base_url .. encoded_query
             )
         end,
-        search = function(parse_result)
-            local encoded_query = create_html_query_parameter(parse_result)
-            local _, open_error = vim.ui.open(base_url .. encoded_query)
-
-            if open_error then
-                notify.error("Failed to search", open_error)
-            end
-        end,
+        search = require("terminal-diagnostics.search").search,
     },
 }
 
