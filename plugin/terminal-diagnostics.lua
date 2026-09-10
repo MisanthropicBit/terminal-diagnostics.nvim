@@ -1,5 +1,18 @@
 local open_command_complete_args
 
+local term_diag_create_options = {
+    terminal_diagnostics = "flag",
+    diagnostics = "flag",
+    locationlist = "flag",
+    quickfix = "flag",
+    trouble = "flag",
+    parallel = "flag",
+    notify = "flag",
+    stable = "flag",
+    links = "flag",
+    command_spec = "string",
+}
+
 local function open_command_complete()
     if not open_command_complete_args then
         open_command_complete_args =
@@ -9,23 +22,23 @@ local function open_command_complete()
     return open_command_complete_args
 end
 
+---@param options terminal-diagnostics.Options
+---@return fun(): string[]
+local function create_complete_function_from_options(options)
+    return function()
+        return vim.tbl_keys(options)
+    end
+end
+
 vim.api.nvim_create_user_command("TermDiagVersion", function()
     vim.print(require("terminal-diagnostics").version())
 end, { nargs = 0, desc = "Print the current version" })
 
 vim.api.nvim_create_user_command("TermDiagCreate", function(args)
-    local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
-        terminal_diagnostics = "flag",
-        diagnostics = "flag",
-        locationlist = "flag",
-        quickfix = "flag",
-        trouble = "flag",
-        parallel = "flag",
-        notify = "flag",
-        stable = "flag",
-        links = "flag",
-        command_spec = "string",
-    })
+    local cmd_args = require("terminal-diagnostics.option_parser").parse(
+        args.fargs,
+        term_diag_create_options
+    )
 
     local diagnostics = require("terminal-diagnostics.diagnostics")
 
@@ -33,8 +46,8 @@ vim.api.nvim_create_user_command("TermDiagCreate", function(args)
 end, {
     nargs = "+",
     range = true,
-    desc =
-    "Create diagnostics or quickfix/locationlist items for the current buffer or a selected range",
+    desc = "Create diagnostics or quickfix/locationlist items for the current buffer or a selected range",
+    complete = create_complete_function_from_options(term_diag_create_options),
 })
 
 vim.api.nvim_create_user_command("TermDiagCreateLastCommand", function(args)
@@ -43,7 +56,9 @@ vim.api.nvim_create_user_command("TermDiagCreateLastCommand", function(args)
     local last_event = handler.last_command_event(0)
 
     if not last_event then
-        require("terminal-diagnostics.notify").error("No last command event registered for buffer")
+        require("terminal-diagnostics.notify").error(
+            "No last command event registered for buffer"
+        )
         return
     end
 
@@ -56,15 +71,26 @@ end, {
 })
 
 vim.api.nvim_create_user_command("TermDiagFirst", function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
     vim.api.nvim_win_set_cursor(0, { 1, 0 })
 
-    require("terminal-diagnostics.api").jump.jump({ wrap = false, count = 1 })
+    local result = require("terminal-diagnostics.api").jump.jump({ wrap = false, count = 1 })
+
+    if not result then
+        vim.api.nvim_win_set_cursor(0, cursor)
+    end
 end, { nargs = 0, desc = "Jump to the first error" })
 
 vim.api.nvim_create_user_command("TermDiagLast", function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+
     vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(0), 0 })
 
-    require("terminal-diagnostics.api").jump.jump({ wrap = false, count = -1 })
+    local result = require("terminal-diagnostics.api").jump.jump({ wrap = false, count = -1 })
+
+    if not result then
+        vim.api.nvim_win_set_cursor(0, cursor)
+    end
 end, { nargs = 0, desc = "Jump to the last error" })
 
 vim.api.nvim_create_user_command("TermDiagPrevious", function(args)
@@ -171,9 +197,28 @@ vim.api.nvim_create_user_command("TermDiagSearch", function()
     end
 
     local config = require("terminal-diagnostics.config")
+    local search_items = config.terminal.search(parse_result)
 
-    config.search(parse_result)
+    if #search_items == 0 then
+        notify.warn("No search options available. Please set config.terminal.search")
+        return
+    elseif #search_items == 1 then
+        search_items[1].action()
+    else
+        vim.ui.select(search_items, {
+            format_item = function(item)
+                return item.name
+            end,
+            prompt = "Select search action",
+        }, function(_, idx)
+            if not idx then
+                return
+            end
+
+            search_items[idx].action()
+        end)
+    end
 end, {
     nargs = 0,
-    desc = "Search the internet for the error under the cursor",
+    desc = "Search one or more sources for the error under the cursor",
 })
