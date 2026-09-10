@@ -1,9 +1,9 @@
----@class terminal-diagnostics.UnderlinePosthookOptions
+---@class terminal-diagnostics.UnderlineJumpOptions
 ---@field hl_group (string | string[])?
 
----@param options terminal-diagnostics.UnderlinePosthookOptions
+---@param options terminal-diagnostics.UnderlineJumpOptions
 return function(options)
-    ---@param context terminal_diagnostics.PostJumpContext
+    ---@param context terminal-diagnostics.PostJumpContext
     return function(context)
         local match = context.match
         local hl_group = options.hl_group or { "Underlined", "ErrorMsg" }
