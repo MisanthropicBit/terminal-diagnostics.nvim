@@ -30,7 +30,7 @@ local error_spec = {
 }
 
 local matcher = HeaderMatcher.new({ header_spec = header_spec, error_spec = error_spec })
-local parser = HeaderParser.new()
+local parser = HeaderParser.new({ has_context = true })
 
 function parser:is_context_line(line, spec)
     -- Only the header spec has context lines
