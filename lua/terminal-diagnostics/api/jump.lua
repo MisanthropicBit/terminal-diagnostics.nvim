@@ -189,9 +189,7 @@ function jump.jump(options)
         vim.api.nvim_win_set_cursor(0, { match_options.lnum + 1, match_options.col })
     end
 
-    ---@cast closest -nil
-
-    if not closest.command_spec then
+    if not closest then
         -- Reset cursor to original position
         vim.api.nvim_win_set_cursor(0, { lnum, col })
 
