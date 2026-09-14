@@ -2,31 +2,14 @@ local cursor = {}
 
 local builtins = require("terminal-diagnostics.command_specs")
 
----@param location terminal-diagnostics.ApiResult?
----@return boolean
-local function last_jump_result_is_valid(location)
-    if not location or not location[1] then
-        return false
-    end
-
-    local _, lnum, col, _ = unpack(vim.fn.getpos("."))
-
-    if lnum >= location[1].from.lnum and lnum <= location[1].to.lnum then
-        if col >= location[1].from.col and col <= location[1].to.col then
-            return true
-        end
-    end
-
-    return false
-end
-
 ---@param buffer integer
 ---@return terminal-diagnostics.ApiResult?
 function cursor.find_at_cursor(buffer)
     local result ---@type terminal-diagnostics.ApiResult
-    local last_jump_result = require("terminal-diagnostics.api.jump").get_last_jump_result()
+    local jump = require("terminal-diagnostics.api.jump")
+    local last_jump_result = jump.get_last_jump_result()
 
-    if last_jump_result_is_valid(last_jump_result) then
+    if jump.last_jump_result_is_valid(last_jump_result) then
         ---@cast last_jump_result -nil
         result = last_jump_result
     else

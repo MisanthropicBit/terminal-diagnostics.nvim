@@ -155,7 +155,8 @@ function jump.jump(options)
     local idx = 1
     local did_wrap = false
 
-    if last_jump_result then
+    if jump.last_jump_result_is_valid(last_jump_result) then
+        ---@cast last_jump_result -nil
         closest = find_consecutive_match(
             last_jump_result.matches[1],
             last_jump_result.command_spec,
@@ -253,6 +254,24 @@ end
 ---@return terminal-diagnostics.ApiResult?
 function jump.get_last_jump_result()
     return last_jump_result
+end
+
+---@param result terminal-diagnostics.ApiResult?
+---@return boolean
+function jump.last_jump_result_is_valid(result)
+    if not result or not result[1] then
+        return false
+    end
+
+    local _, lnum, col, _ = unpack(vim.fn.getpos("."))
+
+    if lnum >= result[1].from.lnum and lnum <= result[1].to.lnum then
+        if col >= result[1].from.col and col <= result[1].to.col then
+            return true
+        end
+    end
+
+    return false
 end
 
 return jump
