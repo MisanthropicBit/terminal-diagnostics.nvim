@@ -77,14 +77,16 @@ local default_config = {
                 base_url .. encoded_query
             )
         end,
-        search = require("terminal-diagnostics.search").search,
+        search = function(parse_result)
+            return require("terminal-diagnostics.api.search").search(parse_result)
+        end
     },
 }
 
 --- Check if a value is a valid string option
 ---@param value any
 ---@return boolean
-function config.valid_string_option(value)
+local function valid_string_option(value)
     return value ~= nil and type(value) == "string" and #value > 0
 end
 

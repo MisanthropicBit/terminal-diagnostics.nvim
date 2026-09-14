@@ -1,8 +1,5 @@
 local notify = require("terminal-diagnostics.notify")
 
--- TODO: Make this such that multiple strings give a ui choice and
--- vim.ui.open is a configurable default? Then users can either
--- search the internet or pass the error to an AI etc.
 local search = {}
 
 ---@class terminal-diagnostics.SearchActionItem
