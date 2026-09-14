@@ -15,6 +15,12 @@ local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
 ---@field count       integer?
 ---@field keep_cursor boolean?
 
+---@class terminal-diagnostics.JumpMatchOptions
+---@field buffer   integer
+---@field position terminal-diagnostics.Position
+---@field count    integer
+---@field extract  boolean
+
 ---@class terminal-diagnostics.ClosestCommandSpec
 ---@field distance     integer
 ---@field match        terminal-diagnostics.Match?
@@ -33,7 +39,7 @@ local augroup = vim.api.nvim_create_augroup("terminal-diagnostics.augroup", {
 local last_jump_result
 
 ---@param command_specs terminal-diagnostics.CommandSpec[]
----@param match_options { buffer: integer, lnum: integer, col: integer, count: integer }
+---@param match_options terminal-diagnostics.JumpMatchOptions
 ---@return terminal-diagnostics.ClosestCommandSpec?
 local function get_closest_command_spec(command_specs, match_options)
     ---@type terminal-diagnostics.ClosestCommandSpec
@@ -45,10 +51,12 @@ local function get_closest_command_spec(command_specs, match_options)
 
     for _, command_spec in ipairs(command_specs) do
         local matcher = command_spec:matcher()
+
+        ---@diagnostic disable-next-line: param-type-mismatch
         local match = matcher:find_match_start(match_options)
 
         if match then
-            local distance = math.abs(match.range.from.lnum - match_options.lnum)
+            local distance = math.abs(match.range.from.lnum - match_options.position.lnum)
 
             if distance ~= 0 and distance < closest_command_spec.distance then
                 closest_command_spec.distance = distance
@@ -87,7 +95,7 @@ local function find_closest_match() end
 ---comment
 ---@param match         terminal-diagnostics.Match
 ---@param command_spec  terminal-diagnostics.CommandSpec
----@param match_options table
+---@param match_options terminal-diagnostics.JumpMatchOptions
 ---@return terminal-diagnostics.ClosestCommandSpec?
 local function find_consecutive_match(match, command_spec, match_options)
     if not match.spec.consecutive then
@@ -95,6 +103,8 @@ local function find_consecutive_match(match, command_spec, match_options)
     end
 
     local matcher = command_spec:matcher()
+
+    ---@diagnostic disable-next-line: param-type-mismatch
     local next_match = matcher:find_match_start(match_options)
 
     -- We matched the next line with the same command spec
@@ -130,11 +140,13 @@ function jump.jump(options)
 
     local command_specs = builtins.get_all()
 
-    -- TODO: Change lnum and col to a position
+    ---@type terminal-diagnostics.JumpMatchOptions
     local match_options = {
         buffer = buffer,
-        lnum = lnum - 1,
-        col = col,
+        position = {
+            lnum = lnum - 1,
+            col = col,
+        },
         count = count,
         extract = false,
     }
@@ -166,27 +178,27 @@ function jump.jump(options)
             end
 
             if count < 0 then
-                match_options.lnum = vim.fn.line("$") - 1
-                match_options.col = 0
+                match_options.position.lnum = vim.fn.line("$") - 1
+                match_options.position.col = 0
             else
-                match_options.lnum = 0
-                match_options.col = 0
+                match_options.position.lnum = 0
+                match_options.position.col = 0
             end
 
             did_wrap = true
         else
             if idx < math.abs(count) then
-                match_options.lnum = closest.match.range.to.lnum
-                match_options.col = closest.match.range.to.col
+                match_options.position.lnum = closest.match.range.to.lnum
+                match_options.position.col = closest.match.range.to.col
             else
-                match_options.lnum = closest.match.range.from.lnum
-                match_options.col = closest.match.range.from.col
+                match_options.position.lnum = closest.match.range.from.lnum
+                match_options.position.col = closest.match.range.from.col
             end
 
             idx = idx + 1
         end
 
-        vim.api.nvim_win_set_cursor(0, { match_options.lnum + 1, match_options.col })
+        vim.api.nvim_win_set_cursor(0, { match_options.position.lnum + 1, match_options.position.col })
     end
 
     if not closest then
@@ -200,6 +212,7 @@ function jump.jump(options)
         return
     end
 
+    ---@diagnostic disable-next-line: param-type-mismatch
     local matches = closest.command_spec:matcher():match(match_options)
 
     if #matches > 0 then
