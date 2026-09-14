@@ -66,7 +66,11 @@ function api_utils.find_parse_result_at_cursor(buffer)
         local lnum, _ = unpack(utils.cursor.api_get())
         local match = find_match_on_line(lnum, result.matches)
 
-        return result, api_utils.get_single_parse_result_with_context(result, match.range.from.lnum)
+        if not match then
+            return
+        end
+
+        return result, api_utils.get_single_parse_result_with_context(result, match.range.from.lnum + 1)
     end
 
     -- If there is no result at the cursor try finding a previous match and see
@@ -101,7 +105,7 @@ function api_utils.get_single_parse_result_with_context(api_result, offset)
     --    results, where X > 1, we need to match on the header first so that we can
     --    overwrite the last_header_match with a new header but otherwise fall back
     --    to the one supplied as an option.
-
+    --
     -- Sticking with solution 4 for now. Solution 3 might be better in the long run
 
     local _offset = offset or api_result.matches[1].range.from.lnum
