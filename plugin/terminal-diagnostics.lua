@@ -7,7 +7,6 @@ local term_diag_create_options = {
     quickfix = "flag",
     trouble = "flag",
     parallel = "flag",
-    notify = "flag",
     stable = "flag",
     links = "flag",
     command_spec = "string",
@@ -74,7 +73,8 @@ vim.api.nvim_create_user_command("TermDiagFirst", function()
     local cursor = vim.api.nvim_win_get_cursor(0)
     vim.api.nvim_win_set_cursor(0, { 1, 0 })
 
-    local result = require("terminal-diagnostics.api").jump.jump({ wrap = false, count = 1 })
+    local result =
+        require("terminal-diagnostics.api").jump.jump({ wrap = false, count = 1 })
 
     if not result then
         vim.api.nvim_win_set_cursor(0, cursor)
@@ -86,7 +86,8 @@ vim.api.nvim_create_user_command("TermDiagLast", function()
 
     vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(0), 0 })
 
-    local result = require("terminal-diagnostics.api").jump.jump({ wrap = false, count = -1 })
+    local result =
+        require("terminal-diagnostics.api").jump.jump({ wrap = false, count = -1 })
 
     if not result then
         vim.api.nvim_win_set_cursor(0, cursor)
