@@ -39,7 +39,11 @@ local function open_match(type, result, path)
             border = "rounded",
             close_on_move = true,
             post_open_hook = function()
-                vim.api.nvim_win_set_cursor(0, { result.lnum, result.col - 1 })
+                if result.lnum then
+                    local col = result.col or 1
+
+                    vim.api.nvim_win_set_cursor(0, { result.lnum, col })
+                end
             end,
         })
     else
