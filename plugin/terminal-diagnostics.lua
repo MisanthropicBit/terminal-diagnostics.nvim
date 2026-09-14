@@ -123,24 +123,25 @@ end, {
 vim.api.nvim_create_user_command("TermDiagSelect", function(args)
     local fargs = args.fargs
     local select = require("terminal-diagnostics.api").select
+    local notify = require("terminal-diagnostics.notify")
+
     local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
         [1] = { "inner", "outer" },
         [2] = vim.tbl_values(select.SelectField)
     })
 
     if #fargs > 2 then
-        vim.notify("Too many arguments, expected 0-2 arguments", vim.log.levels.ERROR)
+        notify.error("Too many arguments, expected 0-2 arguments")
         return
     end
 
     local select_type = fargs[1]
 
     if select_type ~= nil and not vim.tbl_contains({ "inner", "outer" }, select_type) then
-        vim.notify(
+        notify.error(
             ("Unknown first argument '%s', expected 'inner' or 'outer'"):format(
                 select_type
-            ),
-            vim.log.levels.ERROR
+            )
         )
 
         return
@@ -153,11 +154,10 @@ vim.api.nvim_create_user_command("TermDiagSelect", function(args)
         local select_field_values = vim.tbl_values(select.SelectField)
 
         if not vim.tbl_contains(select_field_values, select_field) then
-            vim.notify(
+            notify.error(
                 ("Unknown first argument '%s', expected 'inner' or 'outer'"):format(
                     select_type
-                ),
-                vim.log.levels.ERROR
+                )
             )
 
             return
