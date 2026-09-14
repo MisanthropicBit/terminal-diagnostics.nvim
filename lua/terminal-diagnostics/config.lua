@@ -23,7 +23,7 @@ local config_loaded = false
 ---@field parallel                boolean?  Whether to proceess diagnostics in parallel or not
 ---@field terminal                terminal-diagnostics.ConfigTerminalOptions
 
-local function create_html_query_parameter(parse_result)
+local function create_url_query_parameter(parse_result)
     local name = parse_result.command_spec:name()
     local message = parse_result.values.message
     local code = parse_result.values.code
@@ -67,7 +67,7 @@ local default_config = {
                 return
             end
 
-            local encoded_query = create_html_query_parameter(parse_result)
+            local encoded_query = create_url_query_parameter(parse_result)
             local base_url = require("terminal-diagnostics.search").base_url()
 
             require("terminal-diagnostics.extmark").create_link(
