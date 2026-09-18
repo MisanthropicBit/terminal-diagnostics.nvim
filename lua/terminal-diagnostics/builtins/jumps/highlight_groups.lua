@@ -1,27 +1,42 @@
+---@class terminal-diagnostics.HighlightJumpHighlightGroups
+---@field code     string?
+---@field col      string?
+---@field lnum     string?
+---@field message  string?
+---@field path     string?
+---@field severity string?
+
+---@class terminal-diagnostics.HighlightJumpOptions
+---@field hl_groups terminal-diagnostics.HighlightJumpHighlightGroups?
+
+---@param options terminal-diagnostics.HighlightJumpOptions
 return function(options)
+    ---@param context terminal-diagnostics.PostJumpContext
     return function(context)
         local match = context.match
 
         ---@type integer[]
         local extmark_ids = {}
         local spec_keys = require("terminal-diagnostics.matchers").match_spec_keys()
+        local subgroups = context.subgroups()
+        local hl_groups = options.hl_groups or {}
 
         for _, key in ipairs(spec_keys) do
-            local pos = context.submatches[key]
+            local pos = subgroups[key]
 
             if pos then
-                local hl_group = require("terminal-diagnostics.highlights").hl_group_for_spec_key(key)
+                local hl_group = hl_groups[key] or require("terminal-diagnostics.highlights").hl_group_for_spec_key(key)
 
                 table.insert(
                     extmark_ids,
                     vim.api.nvim_buf_set_extmark(
                         context.buffer,
                         context.ns,
-                        match.range.from.lnum - 1,
-                        pos.start_col - 1,
+                        match.range.from.lnum,
+                        pos.start_col,
                         {
                             hl_group = hl_group,
-                            end_row = match.to.lnum - 1,
+                            end_row = match.range.to.lnum,
                             end_col = pos.end_col,
                         }
                     )

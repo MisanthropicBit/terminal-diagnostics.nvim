@@ -8,7 +8,8 @@ return function(options)
         local match = context.match
         local hl_group = options.hl_group or { "Underlined", "ErrorMsg" }
 
-        local extmark_id = vim.api.nvim_buf_set_extmark(
+        local ok, extmark_id = pcall(
+            vim.api.nvim_buf_set_extmark,
             context.buffer,
             context.ns,
             match.range.from.lnum,
@@ -19,6 +20,13 @@ return function(options)
                 end_col = match.range.to.col,
             }
         )
+
+        if not ok then
+            require("terminal-diagnostics.notify").error(
+                "Failed to create extmark for postjump hook 'underline': "
+                .. tostring(extmark_id)
+            )
+        end
 
         vim.schedule(function()
             vim.api.nvim_create_autocmd("CursorMoved", {

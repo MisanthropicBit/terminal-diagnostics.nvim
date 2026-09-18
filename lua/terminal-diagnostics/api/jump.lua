@@ -2,6 +2,7 @@ local jump = {}
 
 local builtins = require("terminal-diagnostics.command_specs")
 local notify = require("terminal-diagnostics.notify")
+local range = require("terminal-diagnostics.range")
 local utils = require("terminal-diagnostics.utils")
 -- local buffer_cache = require("terminal-diagnostics.buffer_cache.buffer_cache")
 
@@ -228,16 +229,17 @@ function jump.jump(options)
         modeline = false,
         data = {
             -- command_spec = closest.command_spec,
+            match = closest.match,
             buffer = buffer,
             ns = ns,
             augroup = augroup,
-            -- groups = function()
-            --     return require("terminal-diagnostics.patterns").parse_subgroups(
-            --         closest.match.text,
-            --         ---@diagnostic disable-next-line: param-type-mismatch
-            --         closest.match.spec
-            --     )
-            -- end,
+            subgroups = function()
+                return require("terminal-diagnostics.patterns").parse_subgroups(
+                    closest.match.text,
+                    ---@diagnostic disable-next-line: param-type-mismatch
+                    closest.match.spec
+                )
+            end,
         },
     })
 
@@ -265,13 +267,7 @@ function jump.last_jump_result_is_valid(result)
 
     local _, lnum, col, _ = unpack(vim.fn.getpos("."))
 
-    if lnum >= result[1].from.lnum and lnum <= result[1].to.lnum then
-        if col >= result[1].from.col and col <= result[1].to.col then
-            return true
-        end
-    end
-
-    return false
+    return range.contains_pos(result[1], { lnum = lnum, col = col })
 end
 
 return jump

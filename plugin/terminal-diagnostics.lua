@@ -123,11 +123,13 @@ end, {
 vim.api.nvim_create_user_command("TermDiagSelect", function(args)
     local fargs = args.fargs
     local select = require("terminal-diagnostics.api").select
+    local select_fields = vim.tbl_values(select.SelectField)
     local notify = require("terminal-diagnostics.notify")
+    select_fields.optional = true
 
     local cmd_args = require("terminal-diagnostics.option_parser").parse(args.fargs, {
         [1] = { "inner", "outer" },
-        [2] = vim.tbl_values(select.SelectField)
+        [2] = select_fields,
     })
 
     if #fargs > 2 then
@@ -167,7 +169,7 @@ vim.api.nvim_create_user_command("TermDiagSelect", function(args)
     require("terminal-diagnostics.api").select.select({
         lookahead = args.bang,
         outer = select_type == "outer" and true or false,
-        field = select_field
+        field = select_field,
     })
 end, {
     nargs = "+",

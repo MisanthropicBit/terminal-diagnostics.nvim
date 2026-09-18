@@ -13,6 +13,8 @@ local matchers = {}
 
 -- TODO: Add support for end_lnum and end_col
 
+---@alias terminal-diagnostics.Subpattern string | { [1]: string, multiple: boolean }
+
 --- A spec for how to match an error and what information capture groups contain
 ---@class (exact) terminal-diagnostics.MatchSpec
 ---@field pattern     string
@@ -23,7 +25,7 @@ local matchers = {}
 ---@field severity    (integer | terminal-diagnostics.SeverityResolver)?
 ---@field code        integer?
 ---@field message     integer?
----@field subpatterns string[]?
+---@field subpatterns terminal-diagnostics.Subpattern[]?
 ---@field consecutive boolean?
 
 ---@class (exact) terminal-diagnostics.ResolvedMatchSpec : terminal-diagnostics.MatchSpec

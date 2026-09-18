@@ -4,7 +4,7 @@ function highlights.setup()
     vim.cmd([[
         hi default link TerminalDiagnosticsFloatTitle Title
         hi default link TerminalDiagnosticsPath       Title
-        hi default link TerminalDiagnosticsLnum       String
+        hi default link TerminalDiagnosticsLnum       Keyword
         hi default link TerminalDiagnosticsCol        Constant
         hi default link TerminalDiagnosticsCode       Label
         hi default link TerminalDiagnosticsMessage    WarningMsg

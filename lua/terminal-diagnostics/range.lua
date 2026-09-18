@@ -16,6 +16,17 @@ function range.contains(_range, lnum)
 end
 
 ---@param _range terminal-diagnostics.Range
+---@param position terminal-diagnostics.Position
+---@return boolean
+function range.contains_pos(_range, position)
+    if position.lnum >= _range.from.lnum and position.lnum <= _range.to.lnum then
+        return position.col >= _range.from.col and position.col <= _range.to.col
+    end
+
+    return false
+end
+
+---@param _range terminal-diagnostics.Range
 ---@param lnum integer
 ---@return -1 | 0 | 1
 function range.compare(_range, lnum)
