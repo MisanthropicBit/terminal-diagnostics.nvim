@@ -81,6 +81,22 @@ function diagnostics.create(diagnostic)
     )
 end
 
+---@param parse_result terminal-diagnostics.parser.ParseResult
+---@return boolean
+local function has_sufficient_info_for_diagnostic(parse_result)
+    local values = parse_result.values
+
+    if not values then
+        return false
+    end
+
+    if #values.paths == 0 or not values.lnum or not values.col or not values.message then
+        return false
+    end
+
+    return true
+end
+
 ---@param project_diagnostics vim.Diagnostic[]
 local function set_project_diagnostics(project_diagnostics)
     -- TODO: Handle command specs like jest where we need to create project
@@ -160,7 +176,8 @@ function diagnostics.create_for_event(event, options)
 
         if options.links then
             for _, result in ipairs(results) do
-                local namespace = create_namespace_for_command_spec(result.command_spec:name())
+                local namespace =
+                    create_namespace_for_command_spec(result.command_spec:name())
 
                 for _, parse_result in ipairs(result.parse_results) do
                     config.terminal.create_link(namespace, parse_result)
@@ -253,6 +270,10 @@ function diagnostics.from_parse_results(results)
         vim.diagnostic.reset(namespace, result.parse_results[1].buffer)
 
         for _, parse_result in ipairs(grouped_parse_results) do
+            if not has_sufficient_info_for_diagnostic(parse_result) then
+                goto continue
+            end
+
             local buffer = 0
             local path = parse_result.values.paths[1]
             local severity = parse_result.values.severity or "info"
@@ -283,13 +304,15 @@ function diagnostics.from_parse_results(results)
                 severity = vim.diagnostic.severity[severity],
                 message = message,
                 source = parse_result.command_spec:name(),
-                code = parse_result.values.code,
+                code = parse_result.values.code or "",
                 valid = buffer ~= nil,
                 user_data = { path = path },
                 namespace = namespace,
             })
 
             table.insert(_diagnostics, diagnostic)
+
+            :: continue ::
         end
     end
 
@@ -308,7 +331,7 @@ function diagnostics.from_terminal_parse_results(results)
         vim.diagnostic.reset(namespace, result.parse_results[1].buffer)
 
         for _, parse_result in ipairs(result.parse_results) do
-            if not parse_result.values then
+            if not has_sufficient_info_for_diagnostic(parse_result) then
                 goto continue
             end
 
