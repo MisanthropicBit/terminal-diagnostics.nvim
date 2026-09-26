@@ -11,6 +11,9 @@ local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
 -- TODO:
 ---@alias terminal-diagnostics.DiagnosticsFilter fun(): boolean
 
+---@alias terminal-diagnostics.ListHandlerFunc fun(diagnostics: vim.Diagnostic[], options: terminal-diagnostics.ListOptions?)
+---@alias terminal-diagnostics.ListOption boolean | terminal-diagnostics.ListOptions | terminal-diagnostics.ListHandlerFunc
+
 ---@class terminal-diagnostics.ListOptions
 ---@field open  boolean?
 ---@field focus boolean?
@@ -19,9 +22,9 @@ local ns_id = vim.api.nvim_create_namespace("terminal-diagnostics.diagnostics")
 ---@class terminal-diagnostics.DiagnosticsCreateOptions
 ---@field terminal_diagnostics boolean?
 ---@field diagnostics          boolean?
----@field quickfix             (boolean | terminal-diagnostics.ListOptions)?
----@field locationlist         (boolean | terminal-diagnostics.ListOptions)?
----@field trouble              (boolean | terminal-diagnostics.ListOptions)?
+---@field quickfix             terminal-diagnostics.ListOption?
+---@field locationlist         terminal-diagnostics.ListOption?
+---@field trouble              terminal-diagnostics.ListOption?
 ---@field parallel             boolean?
 ---@field filter               terminal-diagnostics.DiagnosticsFilter?
 ---@field stable               boolean? If the buffer is stable and won't be modified
@@ -182,21 +185,32 @@ function diagnostics.create_for_event(event, options)
             local sources = vim.tbl_map(function(result)
                 return result.command_spec:name()
             end, results)
+            local qf_items = diagnostics.toqflist(project_diagnostics)
+            local title = ("terminal-diagnostics.nvim (%s)"):format(
+                vim.iter(sources):join(", ")
+            )
 
             if options.quickfix then
                 diagnostics.setqflist(project_diagnostics, {
                     open = true,
                     focus = false,
-                    title = ("terminal-diagnostics.nvim (%s)"):format(
-                        vim.iter(sources):join(", ")
-                    ),
+                    title = title,
                 })
             end
 
             if options.locationlist then
                 local win_id = vim.api.nvim_get_current_win()
 
-                vim.fn.setloclist(win_id, {}, " ", {})
+                -- An action of " " creates a new list
+                local result = vim.fn.setlocalist(win_id, qf_items, " ")
+
+                if result == -1 then
+                    require("terminal-diagnostics.notify").error(
+                        ("Window id %d is invalid when creating location list"):format(
+                            win_id
+                        )
+                    )
+                end
             end
 
             if options.trouble then
@@ -342,10 +356,8 @@ function diagnostics.set(buffer, _diagnostics, options)
 end
 
 ---@param _diagnostics vim.Diagnostic[]
----@param options terminal-diagnostics.ListOptions?
-function diagnostics.setqflist(_diagnostics, options)
-    local _options = options or {}
-
+---@return vim.quickfix.entry[]
+function diagnostics.toqflist(_diagnostics)
     local qf_items = vim.diagnostic.toqflist(_diagnostics)
 
     for idx = 1, #qf_items do
@@ -360,6 +372,15 @@ function diagnostics.setqflist(_diagnostics, options)
             qf_item.module = ("%s (%s)"):format(relative_path, diagnostic.source)
         end
     end
+
+    return qf_items
+end
+
+---@param _diagnostics vim.Diagnostic[]
+---@param options terminal-diagnostics.ListOptions?
+function diagnostics.setqflist(_diagnostics, options)
+    local _options = options or {}
+    local qf_items = diagnostics.toqflist(_diagnostics)
 
     -- TODO: Use context to replace existing quickfix?
     vim.fn.setqflist({}, " ", {
