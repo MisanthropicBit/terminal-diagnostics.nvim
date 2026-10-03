@@ -262,6 +262,10 @@ function diagnostics.from_parse_results(results)
     local _diagnostics = {}
 
     for _, result in ipairs(results) do
+        if result.command_spec:name() == "path" then
+            goto skip_command_spec
+        end
+
         local grouped_parse_results =
             result.command_spec:group_parse_results(result.parse_results)
         local namespace = create_namespace_for_command_spec(result.command_spec:name())
@@ -314,6 +318,8 @@ function diagnostics.from_parse_results(results)
 
             :: continue ::
         end
+
+        :: skip_command_spec ::
     end
 
     return _diagnostics
@@ -325,6 +331,10 @@ function diagnostics.from_terminal_parse_results(results)
     local terminal_diagnostics = {}
 
     for _, result in ipairs(results) do
+        if result.command_spec:name() == "path" then
+            goto skip_command_spec
+        end
+
         local namespace = create_namespace_for_command_spec(result.command_spec:name())
 
         -- Clear the diagnostic namespace from the buffer
@@ -364,6 +374,8 @@ function diagnostics.from_terminal_parse_results(results)
 
             ::continue::
         end
+
+        :: skip_command_spec ::
     end
 
     return terminal_diagnostics
